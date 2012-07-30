@@ -1,17 +1,16 @@
-#include <string.h>
-
-#include "../snda_ecs_sdk.h"
-#include "../snda_ecs_http_util.h"
-#include "../snda_ecs_constants.h"
-#include "../snda_ecs_common_util.h"
+#include "global.h"
 void delete_object_example(const char* accesskey, const char* secretkey,
 		const char* bucket, const char *region, const char * objectname,
 		int ssl, int followlocation, int maxredirects) {
-	snda_ecs_global_init();
-	SNDAECSHandler* handler = snda_ecs_init_handler();
-	SNDAECSResult* ret = snda_ecs_init_result();
+	SNDAECSHandler* handler = 0;
+	SNDAECSResult* ret = 0;
 
-	SNDAECSErrorCode retcode = snda_ecs_delete_object(handler, accesskey,
+	SNDAECSErrorCode retcode ;
+
+	snda_ecs_global_init();
+	handler = snda_ecs_init_handler();
+	ret = snda_ecs_init_result();
+    retcode = snda_ecs_delete_object(handler, accesskey,
 			secretkey, bucket, objectname, region, ssl, followlocation,
 			maxredirects, ret);
 	if (retcode != SNDA_ECS_SUCCESS) {
@@ -35,6 +34,9 @@ void delete_object_example(const char* accesskey, const char* secretkey,
 				printf("AllErrorMessage:%s\n", content->fullbody);
 			}
 		}
+		if(ret->serverresponse->httpcode == 505) {
+		  printf("Please check your bucketname,accessKey,SecretAccessKey!\n");
+		}
 		snda_ecs_release_error_response_content(content);
 	} else {
 		printf("Delete Object success and the http code is:%d\n",
@@ -46,11 +48,11 @@ void delete_object_example(const char* accesskey, const char* secretkey,
 }
 
 int main() {
-	char * accesskey = "your accesskey";
-	char * secretkey = "your secretkey";
-	char * bucketname = "your bucketname";
-	char * objectname = "your objectname";
-	char * region = "huabei-1";
+	char * accesskey = SNDA_ACCESSKEY;//;"your accessKey";
+	char * secretkey = SNDA_ACCESS_SECRET;//"your secretKey";
+	char * bucketname = SNDA_BUCKET_HUADONG;//"your bucketname";
+	char * region = SDNA_REGION_HUADONG;//your region
+	char * objectname = "test.sh";
 	int followlocation = 0;
 	int maxredirects = 0;
 	int ssl = 0;

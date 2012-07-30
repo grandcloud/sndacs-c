@@ -1,23 +1,22 @@
-#include <string.h>
+#include "global.h"
 
-#include "../snda_ecs_sdk.h"
-#include "../snda_ecs_http_util.h"
-#include "../snda_ecs_constants.h"
-#include "../snda_ecs_common_util.h"
 void head_object_example(const char* accesskey, const char* secretkey,
 		const char* bucketname, const char *region, const char * objectname,
 		long byterangefirst, long byterangelast, int ssl, int followlocation,
 		int maxredirects) {
-	snda_ecs_global_init();
 	SNDAECSHandler* handler = snda_ecs_init_handler();
 	SNDAECSResult* ret = snda_ecs_init_result();
-
 	SNDAECSByteRange* byterangeptr = 0;
+	SNDAECSErrorCode retcode ;
+
+	snda_ecs_global_init();
+	handler = snda_ecs_init_handler();
+	ret = snda_ecs_init_result();
 	byterangeptr = snda_ecs_init_byte_range();
 	byterangeptr->first = byterangefirst;
 	byterangeptr->last = byterangelast;
 
-	SNDAECSErrorCode retcode = snda_ecs_head_object(handler, accesskey,
+	retcode = snda_ecs_head_object(handler, accesskey,
 			secretkey, bucketname, objectname, byterangeptr, region, ssl,
 			followlocation, maxredirects, ret);
 	snda_ecs_release_byte_range(byterangeptr);
@@ -25,19 +24,25 @@ void head_object_example(const char* accesskey, const char* secretkey,
 		printf("ClientErrorMessage:%s", ret->error->handlererrmsg);
 	} else if (ret->serverresponse->httpcode >= 300) {
 		SNDAECSErrorResponseContent* content = snda_ecs_to_error_response(ret);
+		if(content) {
 		printf("ErrorCode:%s\n", content->code);
 		printf("ErrorMessage:%s\n", content->message);
 		printf("Resource:%s\n", content->resource);
 		printf("RequestId:%s\n", content->requestid);
 		printf("AllErrorMessage:%s\n", content->fullbody);
 		snda_ecs_release_error_response_content(content);
+		}
+		if(ret->serverresponse->httpcode == 505) {
+		  printf("Please check your bucketname,accessKey,SecretAccessKey!\n");
+		}
 	} else {
 		SNDAECSObjectMeta* objectmeta = snda_ecs_to_object_meta(ret);
+		SNDAECSKVList* p = 0;
 		printf("Etag;%s\n", objectmeta->etag);
 		printf("Content-Type:%s\n", objectmeta->contenttype);
 		printf("Content-Length:%s\n", objectmeta->lastmodified);
 		printf("Last-Modified:%s\n", objectmeta->lastmodified);
-		SNDAECSKVList* p = objectmeta->usermetas;
+		p = objectmeta->usermetas;
 		for (; p; p = p->next) {
 			printf("p->key:%s\n", p->value);
 		}
@@ -50,11 +55,11 @@ void head_object_example(const char* accesskey, const char* secretkey,
 }
 
 int main() {
-	char * accesskey = "your accesskey";
-	char * secretkey = "your secretkey";
-	char * bucketname = "your bucketname";
-	char * objectname = "name of the object";
-	char * region = "huabei-1";
+	char * accesskey = SNDA_ACCESSKEY;//;"your accessKey";
+	char * secretkey = SNDA_ACCESS_SECRET;//"your secretKey";
+	char * bucketname = SNDA_BUCKET_HUADONG;//"your bucketname";
+	char * region = SDNA_REGION_HUADONG;//your region
+	char * objectname = "test.sh";
 	long byterangefirst = 0;
 	long byterangelast = 50000;
 	int followlocation = 0;

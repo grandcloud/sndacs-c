@@ -1,22 +1,22 @@
-#include <string.h>
-
-#include "../snda_ecs_sdk.h"
-#include "../snda_ecs_http_util.h"
-#include "../snda_ecs_constants.h"
-#include "../snda_ecs_common_util.h"
-
+#include "global.h"
 
 void initiate_multipart_upload_example( const char* accesskey,const char* secretkey,const char* bucket,
                             const char *region,const char * objectname,int ssl,
                             int followlocation,int maxredirects){
-    snda_ecs_global_init();
-    SNDAECSHandler* handler = snda_ecs_init_handler();
-    SNDAECSResult* ret = snda_ecs_init_result();
-    
-    SNDAECSUserObjectMeta* objectmeta = snda_ecs_init_user_object_meta();
-    char contenttype[S_SNDA_ECS_CONTENT_TYPE_LEN];
+   
+	SNDAECSHandler* handler = 0;
+    SNDAECSResult* ret = 0;
+    SNDAECSUserObjectMeta* objectmeta = 0;
+	char contenttype[S_SNDA_ECS_CONTENT_TYPE_LEN];
+	SNDAECSErrorCode retcode ;
+
+	snda_ecs_global_init();
+    handler = snda_ecs_init_handler();
+    ret = snda_ecs_init_result();
+    objectmeta = snda_ecs_init_user_object_meta();
+   
     snda_ecs_set_object_type(objectmeta, snda_ecs_get_content_type(objectname, contenttype));
-    SNDAECSErrorCode retcode = snda_ecs_initiate_multipart_upload(handler, accesskey, secretkey, 
+    retcode = snda_ecs_initiate_multipart_upload(handler, accesskey, secretkey, 
                         bucket, objectname,objectmeta, region, ssl, followlocation, maxredirects,ret);
     snda_ecs_release_user_object_meta(objectmeta);
     if (retcode != SNDA_ECS_SUCCESS) {
@@ -40,11 +40,14 @@ void initiate_multipart_upload_example( const char* accesskey,const char* secret
             printf ("AllErrorMessage:%s\n", content->fullbody);
             }
         }
+		if(ret->serverresponse->httpcode == 505) {
+		  printf("Please check your bucketname,accessKey,SecretAccessKey!\n");
+		}
         snda_ecs_release_error_response_content(content);
     } else {
-       printf ("Initiate multipart upload success and the http code is:%d\n", ret->serverresponse->httpcode);
        SNDAECSInitiateMultipartUploadResult* content = snda_ecs_to_initiate_multipart_upload_result(ret);
-       if(content) {
+       printf ("Initiate multipart upload success and the http code is:%d\n", ret->serverresponse->httpcode);
+	   if(content) {
             if(content->bucket) {
             printf ("Bucket:%s\n", content->bucket);
             } 
@@ -63,16 +66,16 @@ void initiate_multipart_upload_example( const char* accesskey,const char* secret
 }
 
 int main() {
-  char * accesskey = "your accesskey";
-  char * secretkey = "your secretkey";
-  char * bucketname = "your bucketname";
-  char * objectname = "your objectname";
-  char * region = "huabei-1";
-  int followlocation = 0;
-  int maxredirects = 0;
-  int ssl = 0;
-  initiate_multipart_upload_example( accesskey,secretkey,bucketname,region,objectname,ssl,followlocation,maxredirects);
-  return 0;
+	char * accesskey = SNDA_ACCESSKEY;//;"your accessKey";
+	char * secretkey = SNDA_ACCESS_SECRET;//"your secretKey";
+	char * bucketname = SNDA_BUCKET_HUADONG;//"your bucketname";
+	char * region = SDNA_REGION_HUADONG;//your region
+	char * objectname = MULTIPART_UPLOAD_OBJECT;
+	int followlocation = 0;
+	int maxredirects = 0;
+	int ssl = 0;
+	initiate_multipart_upload_example( accesskey,secretkey,bucketname,region,objectname,ssl,followlocation,maxredirects);
+	return 0;
 }
 
 

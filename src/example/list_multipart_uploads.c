@@ -1,19 +1,19 @@
-#include <string.h>
-
-#include "../snda_ecs_sdk.h"
-#include "../snda_ecs_http_util.h"
-#include "../snda_ecs_constants.h"
-#include "../snda_ecs_common_util.h"
+#include "global.h"
 void list_multipart_uploads_example(const char* accesskey,
 		const char* secretkey, const char* bucketname, const char* prefix,
 		const char* keymarker, const char * uploadidmarker,
 		const char* delimiter, int maxuploads, const char* region, int ssl,
 		SNDAECSFollowLocation followlocation, long maxredirects) {
-	snda_ecs_global_init();
-	SNDAECSHandler* handler = snda_ecs_init_handler();
-	SNDAECSResult* ret = snda_ecs_init_result();
 
-	SNDAECSErrorCode retcode = snda_ecs_list_multipart_uploads(handler,
+	SNDAECSHandler* handler = 0;
+	SNDAECSResult* ret = 0;
+	SNDAECSErrorCode retcode;
+
+	snda_ecs_global_init();
+	handler = snda_ecs_init_handler();
+	ret = snda_ecs_init_result();
+
+	retcode = snda_ecs_list_multipart_uploads(handler,
 			accesskey, secretkey, bucketname, prefix, keymarker,
 			uploadidmarker, delimiter, maxuploads, region, ssl, followlocation,
 			maxredirects, ret);
@@ -23,6 +23,8 @@ void list_multipart_uploads_example(const char* accesskey,
 		SNDAECSMultipartUploadsContent* content =
 				snda_ecs_to_multipart_uploads_content(ret);
 		if (content) {
+			SNDAECSMultipartUpload* upload = 0;
+			SNDAECSCommonPrefix* object = 0;
 			printf("Bucket:%s\n", content->bucket);
 			printf("Prefix:%s\n", content->prefix);
 			printf("Delimiter:%s\n", content->delimiter);
@@ -34,7 +36,7 @@ void list_multipart_uploads_example(const char* accesskey,
 			printf("MaxUploads:%d\n", content->maxuploads);
 
 			printf("UPLOADS/\n");
-			SNDAECSMultipartUpload* upload = content->upload;
+			upload = content->upload;
 			while (upload) {
 				printf("\tUPLOAD/\n");
 				printf("\t\tKey:%s\n", upload->key);
@@ -46,7 +48,7 @@ void list_multipart_uploads_example(const char* accesskey,
 			printf("/UPLOADS\n");
 
 			printf("COMMONPREFIXES/\n");
-			SNDAECSCommonPrefix* object = content->commonprefixes;
+			object = content->commonprefixes;
 			while (object) {
 				printf("\tCOMMONPREFIX/\n");
 				printf("\t\tPrefix:%s\n", object->commonprefix);
@@ -74,8 +76,11 @@ void list_multipart_uploads_example(const char* accesskey,
 			if (content->fullbody) {
 				printf("AllErrorMessage:%s\n", content->fullbody);
 			}
-		}
+		} 
 		snda_ecs_release_error_response_content(content);
+		if(ret->serverresponse->httpcode == 505) {
+		  printf("Please check your bucketname,accessKey,SecretAccessKey!\n");
+		}
 	} else {
 		printf("The http code is:%d\n", ret->serverresponse->httpcode);
 	}
@@ -85,10 +90,10 @@ void list_multipart_uploads_example(const char* accesskey,
 }
 
 int main() {
-	char * accesskey = "your accesskey";
-	char * secretkey = "your secretkey";
-	char * bucketname = "bucketname";
-	char * region = "huabei-1";
+	char * accesskey = SNDA_ACCESSKEY;//;"your accessKey";
+	char * secretkey = SNDA_ACCESS_SECRET;//"your secretKey";
+	char * bucketname = SNDA_BUCKET_HUADONG;//"your bucketname";
+	char * region = SDNA_REGION_HUADONG;//your region
 	char * prefix = "";
 	char * keymarker = "";
 	char * delimiter = "/";

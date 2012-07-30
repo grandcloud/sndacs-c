@@ -1,19 +1,18 @@
-#include <string.h>
-
-#include "../snda_ecs_sdk.h"
-#include "../snda_ecs_http_util.h"
-#include "../snda_ecs_constants.h"
-#include "../snda_ecs_common_util.h"
-
+#include "global.h"
 void abort_multipart_upload_example(const char* accesskey,
 		const char* secretkey, const char* bucket, const char *region,
 		const char * objectname, const char * uploadid, int ssl,
 		int followlocation, int maxredirects) {
-	snda_ecs_global_init();
-	SNDAECSHandler* handler = snda_ecs_init_handler();
-	SNDAECSResult* ret = snda_ecs_init_result();
+	
+	SNDAECSHandler* handler = 0;
+	SNDAECSResult* ret = 0;
+	SNDAECSErrorCode retcode ;
 
-	SNDAECSErrorCode retcode = snda_ecs_abort_multipart_upload(handler,
+	snda_ecs_global_init();
+	handler = snda_ecs_init_handler();
+	ret = snda_ecs_init_result();
+
+	retcode = snda_ecs_abort_multipart_upload(handler,
 			accesskey, secretkey, bucket, objectname, uploadid, region, ssl,
 			followlocation, maxredirects, ret);
 
@@ -38,6 +37,9 @@ void abort_multipart_upload_example(const char* accesskey,
 				printf("AllErrorMessage:%s\n", content->fullbody);
 			}
 		}
+		if(ret->serverresponse->httpcode == 505) {
+		  printf("Please check your bucketname,accessKey,SecretAccessKey,uploadid!\n");
+		}
 		snda_ecs_release_error_response_content(content);
 	} else {
 		printf("Abort multipart upload success and the http code is %d\n",
@@ -48,12 +50,12 @@ void abort_multipart_upload_example(const char* accesskey,
 }
 
 int main() {
-	char * accesskey = "your accesskey";
-	char * secretkey = "your secretkey";
-	char * bucketname = "your bucketname";
-	char * objectname = "multi_test";
-	char * region = "huabei-1";
-	char * uploadid = "your upload id";
+	char * accesskey = SNDA_ACCESSKEY;//;"your accessKey";
+	char * secretkey = SNDA_ACCESS_SECRET;//"your secretKey";
+	char * bucketname = SNDA_BUCKET_HUADONG;//"your bucketname";
+	char * region = SDNA_REGION_HUADONG;//your region
+	char * objectname = MULTIPART_UPLOAD_OBJECT;
+	char * uploadid = "5KR75PNM9NNAF8MVD4H1MXXDN";
 	int followlocation = 0;
 	int maxredirects = 0;
 	int ssl = 0;

@@ -1,26 +1,31 @@
-#include <string.h>
-
-#include "../snda_ecs_sdk.h"
-#include "../snda_ecs_http_util.h"
-#include "../snda_ecs_constants.h"
-#include "../snda_ecs_common_util.h"
-
+#include "global.h"
 void upload_part_example(const char* accesskey, const char* secretkey,
 		const char* bucket, const char *region, const char * objectname,
 		const char * uploadid, const char * localfile, int ssl, int partnumber) {
-	snda_ecs_global_init();
-	SNDAECSHandler* handler = snda_ecs_init_handler();
-	SNDAECSResult* ret = snda_ecs_init_result();
-	FILE* fd = fopen(localfile, "rb");
-	fseek(fd, 0L, SEEK_END);
-	long filelength = ftell(fd);
-	fseek(fd, 0, 0);
+	SNDAECSHandler* handler = 0;
+	SNDAECSResult* ret = 0;
+	FILE* fd = 0;
+	long filelength;
 	char * contentmd5 = 0;
-	SNDAECSErrorCode retcode = snda_ecs_upload_part(handler, accesskey,
+	SNDAECSErrorCode retcode;
+	
+	snda_ecs_global_init();
+	handler = snda_ecs_init_handler();
+	ret = snda_ecs_init_result();
+	fd = fopen(localfile, "rb");
+	if(!fd) {
+	   printf("please check your localfile path!\n");
+	   return ;
+	}
+	fseek(fd, 0L, SEEK_END);
+	filelength = ftell(fd);
+	fseek(fd, 0, 0);
+	
+	retcode = snda_ecs_upload_part(handler, accesskey,
 			secretkey, bucket, objectname, uploadid, partnumber,
 			snda_ecs_put_object_body, fd, filelength, contentmd5, region, ssl,
 			ret);
-
+    
 	if (retcode != SNDA_ECS_SUCCESS) {
 		printf("ClientErrorMessage:%s", ret->error->handlererrmsg);
 	} else if (ret->serverresponse->httpcode >= 300) {
@@ -42,6 +47,10 @@ void upload_part_example(const char* accesskey, const char* secretkey,
 				printf("AllErrorMessage:%s\n", content->fullbody);
 			}
 		}
+		
+		if(ret->serverresponse->httpcode == 505) {
+		  printf("Please check your bucketname,accessKey,SecretAccessKey,uploadid!\n");
+		}
 		snda_ecs_release_error_response_content(content);
 	} else {
 		printf("Upload part success and the http code is %d\n",
@@ -52,18 +61,16 @@ void upload_part_example(const char* accesskey, const char* secretkey,
 }
 
 int main() {
-	char * accesskey = "your accesskey";
-	char * secretkey = "your secretkey";
-	char * bucketname = "csdktest1";
-	char * objectname = "albums.json";
-	char * region = "huabei-1";
-	char * uploadid = "your uploadid";
-	char * localfile = "/tmp/test.sh";
-	int followlocation = 0;
-	int maxredirects = 0;
+	char * accesskey = SNDA_ACCESSKEY;//;"your accessKey";
+	char * secretkey = SNDA_ACCESS_SECRET;//"your secretKey";
+	char * bucketname = SNDA_BUCKET_HUADONG;//"your bucketname";
+	char * region = SDNA_REGION_HUADONG;//your region
+	char * localfile = LOCAL_SMALL_FILE_W;
+	char * objectname =MULTIPART_UPLOAD_OBJECT;
+	char * uploadid = "5KR75PNM9NNAF8MVD4H1MXXDN";
 	int ssl = 0;
 	int partnumber = 3;
-
+   
 	upload_part_example(accesskey, secretkey, bucketname, region, objectname,
 			uploadid, localfile, ssl, partnumber);
 	return 0;

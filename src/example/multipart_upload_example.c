@@ -1,28 +1,29 @@
-#include <string.h>
-
-#include "../snda_ecs_sdk.h"
-#include "../snda_ecs_http_util.h"
-#include "../snda_ecs_constants.h"
-#include "../snda_ecs_common_util.h"
-
+#include "global.h"
 /***
  * A full example for upload an object with multipart upload
  */
 const int PART_SIZE = 5 * 1024 * 1024;
 
-SNDAECSInitiateMultipartUploadResult * initiate_multipart_upload_example(
+SNDAECSInitiateMultipartUploadResult * initiate_multipart_upload(
 		const char* accesskey, const char* secretkey, const char* bucket,
 		const char *region, const char * objectname, int ssl,
 		int followlocation, int maxredirects) {
-	snda_ecs_global_init();
-	SNDAECSHandler* handler = snda_ecs_init_handler();
-	SNDAECSResult* ret = snda_ecs_init_result();
+	SNDAECSHandler* handler = 0;
+	SNDAECSResult* ret = 0;
 	SNDAECSInitiateMultipartUploadResult* multipartcontent = 0;
-	SNDAECSUserObjectMeta* objectmeta = snda_ecs_init_user_object_meta();
+	SNDAECSUserObjectMeta* objectmeta = 0;
 	char contenttype[S_SNDA_ECS_CONTENT_TYPE_LEN];
+	SNDAECSErrorCode retcode;
+
+	snda_ecs_global_init();
+	handler = snda_ecs_init_handler();
+	ret = snda_ecs_init_result();
+	multipartcontent = 0;
+	objectmeta = snda_ecs_init_user_object_meta();
+	
 	snda_ecs_set_object_type(objectmeta,
 			snda_ecs_get_content_type(objectname, contenttype));
-	SNDAECSErrorCode retcode = snda_ecs_initiate_multipart_upload(handler,
+	retcode = snda_ecs_initiate_multipart_upload(handler,
 			accesskey, secretkey, bucket, objectname, objectmeta, region, ssl,
 			followlocation, maxredirects, ret);
 	snda_ecs_release_user_object_meta(objectmeta);
@@ -73,35 +74,44 @@ SNDAECSInitiateMultipartUploadResult * initiate_multipart_upload_example(
 	return multipartcontent;
 }
 
-void multipart_upload_example(const char* accesskey, const char* secretkey,
+int multipart_upload(const char* accesskey, const char* secretkey,
 		const char* bucket, const char* objectname, const char* uploadid,
 		const char* region, int ssl, const char * localfile) {
 
-	snda_ecs_global_init();
-	SNDAECSHandler* handler = snda_ecs_init_handler();
-	SNDAECSResult* ret = snda_ecs_init_result();
+	SNDAECSHandler* handler = 0;
+	SNDAECSResult* ret = 0;
 	char * contentmd5 = 0;
-	FILE* fd = fopen(localfile, "rb");
+	FILE* fd = 0;
+	long flength = 0;
+	long cur,next,realsize;
+	int partnumber ;
+	int success = 0;
+
+	snda_ecs_global_init();
+	handler = snda_ecs_init_handler();
+	ret = snda_ecs_init_result();
+	contentmd5 = 0;
+	fd = fopen(localfile, "rb");
 	fseek(fd, 0L, SEEK_END);
-	long flength = ftell(fd);
+	flength = ftell(fd);
 	//int part_number = flength/PART_SIZE + 1;
 	fseek(fd, 0L, 0);
-	long cur = 0;
-	long next;
-	long realsize = PART_SIZE;
-	int partnumber = 1;
+	cur = 0;
+	realsize = PART_SIZE;
+	partnumber = 1;
 	while (cur < flength) {
+		SNDAECSErrorCode retcode;
 		next = cur + PART_SIZE;
 		if (next > flength) {
 			next = flength;
 			realsize = next - cur;
 		}
 
-		SNDAECSErrorCode retcode = snda_ecs_upload_part(handler, accesskey,
+		retcode = snda_ecs_upload_part(handler, accesskey,
 				secretkey, bucket, objectname, uploadid, partnumber,
 				snda_ecs_put_object_body, fd, realsize, contentmd5, region,
 				ssl, ret);
-		int success = 0;
+		success = 0;
 		if (retcode != SNDA_ECS_SUCCESS) {
 			printf("ClientErrorMessage:%s", ret->error->handlererrmsg);
 		} else if (ret->serverresponse->httpcode >= 300) {
@@ -135,6 +145,7 @@ void multipart_upload_example(const char* accesskey, const char* secretkey,
 			printf("Upload parts %d success!\n", partnumber);
 		} else {
 			printf("Upload parts %d Failed!\n", partnumber);
+			break;
 		}
 		cur = next;
 		partnumber++;
@@ -144,24 +155,31 @@ void multipart_upload_example(const char* accesskey, const char* secretkey,
 	fclose(fd);
 	snda_ecs_release_handler(handler);
 	snda_ecs_relase_result(ret);
+	return success;
 }
 
-SNDAECSMultipartsContent* list_parts_example(const char* accesskey,
+SNDAECSMultipartsContent* list_parts(const char* accesskey,
 		const char* secretkey, const char* bucket, const char *region,
 		const char * objectname, const char * uploadid, int ssl,
 		int followlocation, int partnumbermarker, int maxparts, int maxdirects) {
+	SNDAECSHandler* handler = 0;
+	SNDAECSResult* ret = 0;
+	SNDAECSErrorCode retcode = 0;
+	SNDAECSMultipartsContent* multipartcontent = 0;
+   
 	snda_ecs_global_init();
-	SNDAECSHandler* handler = snda_ecs_init_handler();
-	SNDAECSResult* ret = snda_ecs_init_result();
-	SNDAECSErrorCode retcode = snda_ecs_list_parts(handler, accesskey,
+	handler = snda_ecs_init_handler();
+	ret = snda_ecs_init_result();
+	retcode = snda_ecs_list_parts(handler, accesskey,
 			secretkey, bucket, objectname, uploadid, partnumbermarker,
 			maxparts, region, ssl, followlocation, maxdirects, ret);
-	SNDAECSMultipartsContent* multipartcontent = 0;
+	
 	if (retcode != SNDA_ECS_SUCCESS) {
 		printf("ClientErrorMessage:%s", ret->error->handlererrmsg);
 	} else if (ret->serverresponse->httpcode < 300) {
 		multipartcontent = snda_ecs_to_multipart_parts(ret);
 		if (multipartcontent) {
+			SNDAECSMultipartsPart* part = 0;
 			printf("Bucket:%s\n", multipartcontent->bucket);
 			printf("Key:%s\n", multipartcontent->key);
 			printf("UploadId:%s\n", multipartcontent->uploadid);
@@ -172,7 +190,7 @@ SNDAECSMultipartsContent* list_parts_example(const char* accesskey,
 					multipartcontent->nextpartnumbermarker);
 
 			printf("PARTS/\n");
-			SNDAECSMultipartsPart* part = multipartcontent->parts;
+			part = multipartcontent->parts;
 			while (part) {
 				printf("\tPART/\n");
 				printf("\t\tPartNumber:%d\n", part->partnumber);
@@ -204,6 +222,9 @@ SNDAECSMultipartsContent* list_parts_example(const char* accesskey,
 				printf("AllErrorMessage:%s\n", content->fullbody);
 			}
 		}
+		if(ret->serverresponse->httpcode == 505) {
+		  printf("Please check your bucketname,accessKey,SecretAccessKey!\n");
+		}
 		snda_ecs_release_error_response_content(content);
 	}
 	snda_ecs_release_handler(handler);
@@ -211,17 +232,24 @@ SNDAECSMultipartsContent* list_parts_example(const char* accesskey,
 	return multipartcontent;
 }
 
-void complete_multipart_upload_example(const char* accesskey,
+void complete_multipart_upload(const char* accesskey,
 		const char* secretkey, const char* bucket, const char *region,
 		const char * objectname, const char * uploadid, int ssl,
 		int followlocation, int maxdirects,
 		const SNDAECSMultipartsContent * multipartcontent) {
+	SNDAECSHandler* handler = 0;
+	SNDAECSResult* ret = 0;
+	SNDAECSMultipartsPart* part = 0;
+	SNDAECSMultipartsMeta* metas = 0;
+	SNDAECSMultipartsMeta* p = 0;
+	SNDAECSErrorCode retcode;
+
 	snda_ecs_global_init();
-	SNDAECSHandler* handler = snda_ecs_init_handler();
-	SNDAECSResult* ret = snda_ecs_init_result();
-	SNDAECSMultipartsPart* part = multipartcontent->parts;
-	SNDAECSMultipartsMeta* metas = snda_ecs_init_multiparts_meta();
-	SNDAECSMultipartsMeta* p = metas;
+	handler = snda_ecs_init_handler();
+	ret = snda_ecs_init_result();
+	part = multipartcontent->parts;
+	metas = snda_ecs_init_multiparts_meta();
+	p = metas;
 	while (part) {
 		p->partnumber = part->partnumber;
 		snda_ecs_copy_string(&(p->etag), part->etag);
@@ -232,7 +260,7 @@ void complete_multipart_upload_example(const char* accesskey,
 		}
 	}
 
-	SNDAECSErrorCode retcode = snda_ecs_complete_multipart_upload(handler,
+	retcode = snda_ecs_complete_multipart_upload(handler,
 			accesskey, secretkey, bucket, objectname, uploadid, metas, region,
 			ssl, followlocation, maxdirects, ret);
 
@@ -259,6 +287,9 @@ void complete_multipart_upload_example(const char* accesskey,
 				printf("AllErrorMessage:%s\n", content->fullbody);
 			}
 		}
+		if(ret->serverresponse->httpcode == 505) {
+		  printf("Please check your bucketname,accessKey,SecretAccessKey!\n");
+		}
 		snda_ecs_release_error_response_content(content);
 	} else {
 		printf("Complete multipart upload success and the http code is %d\n",
@@ -268,26 +299,31 @@ void complete_multipart_upload_example(const char* accesskey,
 	snda_ecs_relase_result(ret);
 }
 
-void multipart_upload_one_object_example(const char * accesskey,
+void multipart_upload_one_object(const char * accesskey,
 		const char * secretkey, const char * bucket, const char * objectname,
 		const char * region, const char * localfile, int followlocation,
 		int maxdirects, int ssl) {
 	SNDAECSInitiateMultipartUploadResult * multipartcontent =
-			initiate_multipart_upload_example(accesskey, secretkey, bucket,
+			initiate_multipart_upload(accesskey, secretkey, bucket,
 					region, objectname, ssl, followlocation, maxdirects);
 	if (multipartcontent && multipartcontent->uploadid
 			&& multipartcontent->bucket && multipartcontent->key) {
-		multipart_upload_example(accesskey, secretkey, bucket, objectname,
-				multipartcontent->uploadid, region, ssl, localfile);
 		int partnumbermarker = 0;
 		int maxparts = 1000;
+		SNDAECSMultipartsContent * listcontent = 0;
+		if(0==multipart_upload(accesskey, secretkey, bucket, objectname,multipartcontent->uploadid, region, ssl, localfile)) {
+		    printf("Multipart Upload failed!\n");
+			return;
+		}
+		partnumbermarker = 0;
+		maxparts = 1000;
 		//Get etags for each part
-		SNDAECSMultipartsContent * listcontent = list_parts_example(accesskey,
+		listcontent = list_parts(accesskey,
 				secretkey, bucket, region, objectname,
 				multipartcontent->uploadid, ssl, followlocation,
 				partnumbermarker, maxparts, maxdirects);
 		if (listcontent) {
-			complete_multipart_upload_example(accesskey, secretkey, bucket,
+			complete_multipart_upload(accesskey, secretkey, bucket,
 					region, objectname, multipartcontent->uploadid, ssl,
 					followlocation, maxdirects, listcontent);
 		}
@@ -307,11 +343,11 @@ void testComplete() {
 	int ssl = 0;
 	int partnumbermarker = 0;
 	int maxparts = 1000;
-	SNDAECSMultipartsContent * listcontent = list_parts_example(accesskey,
+	SNDAECSMultipartsContent * listcontent = list_parts(accesskey,
 			secretkey, bucket, region, objectname, "4S6NM3MBJBK9MET41W30LJWA3",
 			ssl, followlocation, partnumbermarker, maxparts, maxdirects);
 	if (listcontent) {
-		complete_multipart_upload_example(accesskey, secretkey, bucket, region,
+		complete_multipart_upload(accesskey, secretkey, bucket, region,
 				objectname, "4S6NM3MBJBK9MET41W30LJWA3", ssl, followlocation,
 				maxdirects, listcontent);
 	}
@@ -319,16 +355,16 @@ void testComplete() {
 }
 
 int main() {
-	char * accesskey = "your accesskey";
-	char * secretkey = "your secretkey";
-	char * bucket = "your bucketname";
-	char * objectname = "hello.json";
-	char * region = "huabei-1";
-	char * localfile = "/home/fun/Graduation_project/data/albums.json";
+	char * accesskey = SNDA_ACCESSKEY;//;"your accessKey";
+	char * secretkey = SNDA_ACCESS_SECRET;//"your secretKey";
+	char * bucket = SNDA_BUCKET_HUADONG;//"your bucketname";
+	char * region = SDNA_REGION_HUADONG;//your region
+	char * objectname = MULTIPART_UPLOAD_OBJECT;
+	char * localfile = LOCAL_BIG_FILE_W;
 	int followlocation = 0;
 	int maxdirects = 0;
 	int ssl = 0;
-	multipart_upload_one_object_example(accesskey, secretkey, bucket,
+	multipart_upload_one_object(accesskey, secretkey, bucket,
 			objectname, region, localfile, followlocation, maxdirects, ssl);
 
 	return 0;

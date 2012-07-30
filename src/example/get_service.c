@@ -1,15 +1,13 @@
-#include <string.h>
+#include "global.h"
 
-#include "../snda_ecs_sdk.h"
-#include "../snda_ecs_http_util.h"
-#include "../snda_ecs_constants.h"
-#include "../snda_ecs_common_util.h"
 void get_service_example(const char* accesskey, const char* secretkey,int ssl) {
+	SNDAECSHandler* handler = 0;
+	SNDAECSResult* ret = 0;
+	SNDAECSErrorCode retcode ;
 	snda_ecs_global_init();
-	SNDAECSHandler* handler = snda_ecs_init_handler();
-	SNDAECSResult* ret = snda_ecs_init_result();
-	SNDAECSErrorCode retcode = snda_ecs_get_service(handler, accesskey,
-			secretkey, ssl, ret);
+	handler = snda_ecs_init_handler();
+	ret = snda_ecs_init_result();
+	retcode = snda_ecs_get_service(handler, accesskey,secretkey, ssl, ret);
 	if (retcode != SNDA_ECS_SUCCESS) {
 		printf ("ClientErrorMessage:%s\n", ret->error->handlererrmsg);
 	} else if (ret->serverresponse->httpcode == 200) {
@@ -37,8 +35,8 @@ void get_service_example(const char* accesskey, const char* secretkey,int ssl) {
 }
 
 int main() {
-	char * accesskey = "your accessKey";
-	char * secretkey = "your secretKey";
+	char * accesskey = SNDA_ACCESSKEY;//;"your accessKey";
+	char * secretkey = SNDA_ACCESS_SECRET;//"your secretKey";
 	int ssl = 0;
 	get_service_example(accesskey, secretkey, ssl);
 	return 0;

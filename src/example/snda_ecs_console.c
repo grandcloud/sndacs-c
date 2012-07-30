@@ -1,9 +1,13 @@
+#if defined(WIN32)
+#define _CRT_SECURE_NO_DEPRECATE
+#endif
+
 #include <string.h>
 
-#include "../snda_ecs_sdk.h"
-#include "../snda_ecs_http_util.h"
-#include "../snda_ecs_constants.h"
-#include "../snda_ecs_common_util.h"
+#include "../sdk/snda_ecs_sdk.h"
+#include "../sdk/snda_ecs_http_util.h"
+#include "../sdk/snda_ecs_constants.h"
+#include "../sdk/snda_ecs_common_util.h"
 
 static void snda_ecs_oneline(const char* msg) {
 	printf("%s \n", msg);
@@ -62,7 +66,14 @@ static void showhelp() {
 }
 
 int main(int argc, char** args) {
-	const char* cmd = snda_ecs_argument_retriever(argc, args, "--cmd=");
+	
+    SNDAECSHandler* handler = 0;
+    SNDAECSResult* ret = 0;
+    SNDAECSErrorCode retcode = SNDA_ECS_ERROR;
+    const char* accesskey = 0;
+    const char* secretkey = 0;
+
+    const char* cmd = snda_ecs_argument_retriever(argc, args, "--cmd=");
 	if (!cmd) {
 		showhelp();
 		exit(-1);
@@ -71,29 +82,28 @@ int main(int argc, char** args) {
 	// global init snda elastic cloud storage environment
 	snda_ecs_global_init();
 
-	SNDAECSHandler* handler = snda_ecs_init_handler();
+	handler = snda_ecs_init_handler();
 	if (!handler) {
 		snda_ecs_oneline("init snda ecs handler failed.");
 		exit(-1);
 	}
 
 	// wrapper for result
-	SNDAECSResult* ret = snda_ecs_init_result();
+	ret = snda_ecs_init_result();
 
-	SNDAECSErrorCode retcode = SNDA_ECS_ERROR;
-
-	const char* accesskey = snda_ecs_argument_retriever(argc, args, "--accesskey=");
-	const char* secretkey = snda_ecs_argument_retriever(argc, args, "--secretkey=");
+	accesskey = snda_ecs_argument_retriever(argc, args, "--accesskey=");
+	secretkey = snda_ecs_argument_retriever(argc, args, "--secretkey=");
 
 	if (!strcmp(cmd, "get_service")) {
 		const char* sslstr = snda_ecs_argument_retriever(argc, args, "--ssl=");
+        int ssl = 0;
 
 		if (!cmd || !accesskey || !secretkey || !sslstr) {
 			snda_ecs_oneline("arguments: --cmd=get_service --accesskey= --secretkey= --ssl=(0/1)");
 			exit(-1);
 		}
 
-		int ssl = atoi(sslstr);
+		ssl = atoi(sslstr);
 		retcode = snda_ecs_get_service(handler, accesskey, secretkey, ssl, ret);
 
 		if (retcode == SNDA_ECS_SUCCESS && ret->serverresponse->httpcode == 200) {
@@ -113,13 +123,14 @@ int main(int argc, char** args) {
 		const char* bucketname = snda_ecs_argument_retriever(argc, args, "--bucket=");
 		const char* region = snda_ecs_argument_retriever(argc, args, "--region=");
 		const char* sslstr = snda_ecs_argument_retriever(argc, args, "--ssl=");
+        int ssl  = 0;
 
 		if (!cmd || !accesskey || !secretkey || !bucketname || !region || !sslstr) {
 			snda_ecs_oneline("arguments: --cmd=put_bucket --accesskey= --secretkey= --bucket= --region=(huadong-1/huabei-1) --ssl=(0/1)");
 			exit(-1);
 		}
 
-		int ssl = atoi(sslstr);
+		ssl = atoi(sslstr);
 		// when put bucket successfully, no value returned
 		retcode = snda_ecs_put_bucket(handler, accesskey, secretkey, bucketname, region, ssl, ret);
 
@@ -127,34 +138,28 @@ int main(int argc, char** args) {
 		const char* bucket = snda_ecs_argument_retriever(argc, args, "--bucket=");
 		const char* policy = snda_ecs_argument_retriever(argc, args, "--policy=");
 		const char* sslstr = snda_ecs_argument_retriever(argc, args, "--ssl=");
+        int ssl = 0;
 		if (!cmd || !accesskey || !secretkey || !bucket || !policy || !sslstr) {
 			snda_ecs_oneline("arguments: --cmd=put_bucket_policy --accesskey= --secretkey= --bucket= --policy= --ssl=(0/1)");
 			exit(-1);
 		}
-		int ssl = atoi(sslstr);
-
-		/*const char* policyprefix = "{\"Id\": \"c2e63aeb-b814-45e7-bec3-c2770ebd147c\",\"Statement\": [{\"Sid\": \"public-get-object\",\"Effect\": \"Allow\",\"Principal\": {\"SNDA\": \"*\"},\"Action\": \"storage:GetObject\",\"Resource\": \"srn:snda:storage:::";
-		const char* policysuffix = "/*\"}]}";
-		int len = strlen(policyprefix) + strlen(args[4]) + strlen(policysuffix) + 1;
-		char policy[len];
-		sprintf(policy, "%s", policyprefix);
-		sprintf(policy + strlen(policy), "%s", args[4]);
-		sprintf(policy + strlen(policy), "%s", policysuffix);*/
+		ssl = atoi(sslstr);
 
 		retcode = snda_ecs_put_bucket_policy(handler, accesskey, secretkey, bucket, policy, ssl, ret);
 	} else if (!strcmp(cmd, "get_bucket_policy")) {
 		const char* bucketname = snda_ecs_argument_retriever(argc, args, "--bucket=");
 		const char* sslstr = snda_ecs_argument_retriever(argc, args, "--ssl=");
+        int ssl = 0;
 		if (!cmd || !accesskey || !secretkey || !bucketname || !sslstr) {
 			snda_ecs_oneline("arguments: --cmd=get_bucket_policy --accesskey= --secretkey= --bucket= --ssl=(0/1)");
 			exit(-1);
 		}
-		int ssl = atoi(sslstr);
+		ssl = atoi(sslstr);
 
 		retcode = snda_ecs_get_bucket_policy(handler, accesskey, secretkey, bucketname, ssl, ret);
 
 		if (retcode == SNDA_ECS_SUCCESS && ret->serverresponse->httpcode == 200) {
-			char policy[ret->serverresponse->responsebody->retbodysize + 1];
+			char* policy = (char*)malloc(ret->serverresponse->responsebody->retbodysize + 1);
 			policy[ret->serverresponse->responsebody->retbodysize] = '\0';
 
 			memcpy(policy,
@@ -163,26 +168,29 @@ int main(int argc, char** args) {
 			);
 			snda_ecs_onelinevaluestring("bucket", bucketname);
 			snda_ecs_onelinevaluestring("policy", policy);
+            snda_ecs_free_char_ptr(policy);
 		}
 	} else if (!strcmp(cmd, "delete_bucket_policy")) {
 		const char* bucketname = snda_ecs_argument_retriever(argc, args, "--bucket=");
 		const char* sslstr = snda_ecs_argument_retriever(argc, args, "--ssl=");
+        int ssl = 0;
 		if (!cmd || !accesskey || !secretkey || !bucketname || !sslstr) {
 			snda_ecs_oneline("arguments: --cmd=delete_bucket_policy --accesskey= --secretkey= --bucket= --ssl=(0/1)");
 			exit(-1);
 		}
-		int ssl = atoi(sslstr);
+		ssl = atoi(sslstr);
 
 		retcode = snda_ecs_delete_bucket_policy(handler, accesskey, secretkey, bucketname, ssl, ret);
 
 	} else if (!strcmp(cmd, "get_bucket_location")) {
 		const char* bucketname = snda_ecs_argument_retriever(argc, args, "--bucket=");
 		const char* sslstr = snda_ecs_argument_retriever(argc, args, "--ssl=");
+        int ssl = 0;
 		if (!cmd || !accesskey || !secretkey || !bucketname || !sslstr) {
 			snda_ecs_oneline("arguments: --cmd=get_bucket_location --accesskey= --secretkey= --bucket= --ssl=(0/1)");
 			exit(-1);
 		}
-		int ssl = atoi(sslstr);
+		ssl = atoi(sslstr);
 
 		retcode = snda_ecs_get_bucket_location(handler, accesskey, secretkey, bucketname, ssl, ret);
 
@@ -200,13 +208,17 @@ int main(int argc, char** args) {
 		const char* sslstr = snda_ecs_argument_retriever(argc, args, "--ssl=");
 		const char* followlocationstr = snda_ecs_argument_retriever(argc, args, "--followlocation=");
 		const char* maxredirectsstr = snda_ecs_argument_retriever(argc, args, "--maxredirects=");
+        int ssl = 0;
+        int followlocation = 0;
+		long maxredirects = 0;
+
 		if (!cmd || !accesskey || !secretkey || !bucketname || !region || !sslstr || !followlocationstr || !maxredirectsstr) {
 			snda_ecs_oneline("arguments: --cmd=delete_bucket --accesskey= --secretkey= --bucket= --region= --ssl=(0/1) --followlocation=(0/1) --maxredirects=");
 			exit(-1);
 		}
-		int ssl = atoi(sslstr);
-		int followlocation = atoi(followlocationstr);
-		long maxredirects = atol(maxredirectsstr);
+		ssl = atoi(sslstr);
+		followlocation = atoi(followlocationstr);
+		maxredirects = atol(maxredirectsstr);
 		retcode = snda_ecs_delete_bucket(handler, accesskey, secretkey, bucketname, region, ssl, followlocation, maxredirects, ret);
 
 	} else if (!strcmp(cmd, "get_bucket")) {
@@ -219,15 +231,19 @@ int main(int argc, char** args) {
 		const char* sslstr = snda_ecs_argument_retriever(argc, args, "--ssl=");
 		const char* followlocationstr = snda_ecs_argument_retriever(argc, args, "--followlocation=");
 		const char* maxredirectsstr = snda_ecs_argument_retriever(argc, args, "--maxredirects=");
+        int ssl = 0;
+        int followlocation = 0;
+		long maxredirects = 0;
+        int maxkeys = 0;
 
 		if (!cmd || !accesskey || !secretkey || !bucketname || !region || !sslstr || !followlocationstr || !maxredirectsstr) {
 			snda_ecs_oneline("arguments: --cmd=get_bucket --accesskey= --secretkey= --bucket= --region= --ssl=(0/1) --followlocation=(0/1) --maxredirects= [--prefix= --marker= -- delimiter= --maxkeys=]");
 			exit(-1);
 		}
-		int maxkeys = maxkeysstr == 0 ? 1000 : atoi(maxkeysstr);
-		int ssl = atoi(sslstr);
-		int followlocation = atoi(followlocationstr);
-		long maxredirects = atol(maxredirectsstr);
+		maxkeys = maxkeysstr == 0 ? 1000 : atoi(maxkeysstr);
+		ssl = atoi(sslstr);
+		followlocation = atoi(followlocationstr);
+		maxredirects = atol(maxredirectsstr);
 
 		snda_ecs_onelinevaluestring("prefix", prefix);
 		snda_ecs_onelinevaluestring("marker", marker);
@@ -295,14 +311,17 @@ int main(int argc, char** args) {
 		const char* contenttype = snda_ecs_argument_retriever(argc, args, "--contenttype=");
 		const char* region = snda_ecs_argument_retriever(argc, args, "--region=");
 		const char* sslstr = snda_ecs_argument_retriever(argc, args, "--ssl=");
+        int ssl = 0;
+        SNDAECSUserObjectMeta* objectmeta = 0;
+        FILE* fd = 0;
 
 		if (!cmd || !accesskey || !secretkey || !bucket || !objectname || !filelengthstr || !localfile || !region || !sslstr) {
 			snda_ecs_oneline("arguments: --cmd=put_object --accesskey= --secretkey= --bucket=  --filelength= --key= --localfile= --region= --ssl=(0/1) [--contenttype= ]");
 			exit(-1);
 		}
-		int ssl = atoi(sslstr);
+		ssl = atoi(sslstr);
 
-		SNDAECSUserObjectMeta* objectmeta = snda_ecs_init_user_object_meta();
+		objectmeta = snda_ecs_init_user_object_meta();
 		if (contenttype) {
 			snda_ecs_set_object_type(objectmeta, contenttype);
 		}
@@ -311,12 +330,12 @@ int main(int argc, char** args) {
 		snda_ecs_add_object_user_metas(objectmeta, "x-snda-meta-1", "this is my user meta 1");
 		snda_ecs_add_object_user_metas(objectmeta, "x-SNDA-metA-2", "WOO, the seconde user meta");
 
-		FILE* fd = fopen(localfile, "rb");
+		fd = fopen(localfile, "rb");
 		retcode = snda_ecs_put_object(handler, accesskey, secretkey, bucket, objectname,
 				snda_ecs_put_object_body, fd, atol(filelengthstr),
 				objectmeta, region, ssl,
 				ret);
-
+        fclose(fd);
 		// release object meta
 		snda_ecs_release_user_object_meta(objectmeta);
 
@@ -327,14 +346,17 @@ int main(int argc, char** args) {
 		const char* sslstr = snda_ecs_argument_retriever(argc, args, "--ssl=");
 		const char* followlocationstr = snda_ecs_argument_retriever(argc, args, "--followlocation=");
 		const char* maxredirectsstr = snda_ecs_argument_retriever(argc, args, "--maxredirects=");
+        int ssl = 0;
+        int followlocation = 0;
+		long maxredirects = 0;
 
 		if (!cmd || !accesskey || !secretkey || !bucket || !objectname || !region || !sslstr || !followlocationstr || !maxredirectsstr ) {
 			snda_ecs_oneline("arguments: --cmd=delete_object --accesskey= --secretkey= --bucket= --key= --region= --ssl=(0/1) --followlocation=(0/1) --maxredirects= ");
 			exit(-1);
 		}
-		int ssl = atoi(sslstr);
-		int followlocation = atoi(followlocationstr);
-		long maxredirects = atol(maxredirectsstr);
+		ssl = atoi(sslstr);
+		followlocation = atoi(followlocationstr);
+		maxredirects = atol(maxredirectsstr);
 
 		retcode = snda_ecs_delete_object(handler, accesskey, secretkey, bucket, objectname, region , ssl, followlocation, maxredirects, ret);
 	} else if (!strcmp(cmd, "get_object")) {
@@ -350,24 +372,27 @@ int main(int argc, char** args) {
 		const char* sslstr = snda_ecs_argument_retriever(argc, args, "--ssl=");
 		const char* followlocationstr = snda_ecs_argument_retriever(argc, args, "--followlocation=");
 		const char* maxredirectsstr = snda_ecs_argument_retriever(argc, args, "--maxredirects=");
+        int ssl = 0;
+        int followlocation = 0;
+		long maxredirects = 0;
+        SNDAECSByteRange* byterangeptr = 0;
+        FILE* writefd = 0;
 
 		if (!cmd || !accesskey || !secretkey || !bucket || !objectname || !locafile || !region || !sslstr || !followlocationstr || !maxredirectsstr ) {
 			snda_ecs_oneline("arguments: --cmd=get_object --accesskey= --secretkey= --bucket= --key= --localfile= --region= --ssl=(0/1) --followlocation=(0/1) --maxredirects= [--byterangefirst= --byterangelast=]");
 			exit(-1);
 		}
-		int ssl = atoi(sslstr);
-		int followlocation = atoi(followlocationstr);
-		long maxredirects = atol(maxredirectsstr);
+		ssl = atoi(sslstr);
+		followlocation = atoi(followlocationstr);
+		maxredirects = atol(maxredirectsstr);
 
-
-		SNDAECSByteRange* byterangeptr = 0;
 		if (byterangefirst && byterangelast) {
 			byterangeptr = snda_ecs_init_byte_range();
 			byterangeptr->first = atol(byterangefirst);
 			byterangeptr->last = atol(byterangelast);
 		}
 
-		FILE* writefd = fopen(locafile, "wb");
+		writefd = fopen(locafile, "wb");
 
 		retcode = snda_ecs_get_object(handler, accesskey, secretkey, bucket, objectname, byterangeptr,
 				snda_ecs_write_fun, writefd, region, ssl,  followlocation, maxredirects,
@@ -385,16 +410,19 @@ int main(int argc, char** args) {
 		const char* sslstr = snda_ecs_argument_retriever(argc, args, "--ssl=");
 		const char* followlocationstr = snda_ecs_argument_retriever(argc, args, "--followlocation=");
 		const char* maxredirectsstr = snda_ecs_argument_retriever(argc, args, "--maxredirects=");
+        int ssl = 0;
+        int followlocation = 0;
+		long maxredirects = 0;
+        SNDAECSByteRange* byterangeptr = 0;
 
 		if (!cmd || !accesskey || !secretkey || !bucket || !objectname || !region || !sslstr || !followlocationstr || !maxredirectsstr ) {
 			snda_ecs_oneline("arguments: --cmd=head_object --accesskey= --secretkey= --bucket= --key= --region= --ssl=(0/1) --followlocation=(0/1) --maxredirects= [--byterangefirst= --byterangelast=]");
 			exit(-1);
 		}
-		int ssl = atoi(sslstr);
-		int followlocation = atoi(followlocationstr);
-		long maxredirects = atol(maxredirectsstr);
+		ssl = atoi(sslstr);
+		followlocation = atoi(followlocationstr);
+		maxredirects = atol(maxredirectsstr);
 
-		SNDAECSByteRange* byterangeptr = 0;
 		if (byterangefirst && byterangelast) {
 			byterangeptr = snda_ecs_init_byte_range();
 			byterangeptr->first = atol(byterangefirst);
@@ -409,32 +437,34 @@ int main(int argc, char** args) {
 
 		if (retcode == SNDA_ECS_SUCCESS && ret->serverresponse->httpcode < 300) {
 			SNDAECSObjectMeta* objectmeta = snda_ecs_to_object_meta(ret);
+            SNDAECSKVList* p = objectmeta->usermetas;
 
 			snda_ecs_onelinevaluestring("Etag", objectmeta->etag);
 			snda_ecs_onelinevaluestring("Content-Type", objectmeta->contenttype);
 			snda_ecs_onelinevaluestring("Content-Length", objectmeta->lastmodified);
 			snda_ecs_onelinevaluestring("Last-Modified", objectmeta->lastmodified);
 
-			SNDAECSKVList* p = objectmeta->usermetas;
-			for (; p; p = p->next) {
+            for (; p; p = p->next) {
 				snda_ecs_onelinevaluestring("p->key", p->value);
 			}
 
 			snda_ecs_release_object_meta(objectmeta);
 		}
 	} else if(!strcmp(cmd,"copy_object")){
-
 		const char* destbucketname = snda_ecs_argument_retriever(argc, args, "--destbucket=");
 		const char* destobjectname = snda_ecs_argument_retriever(argc, args, "--destkey=");
 		const char* srcbucketname = snda_ecs_argument_retriever(argc, args, "--srcbucket=");
 		const char* srcobjectname = snda_ecs_argument_retriever(argc, args, "--srckey=");
 		const char* region = snda_ecs_argument_retriever(argc, args, "--region=");
 		const char* sslstr = snda_ecs_argument_retriever(argc, args, "--ssl=");
+        int ssl = 0;
+        SNDAECSUserObjectMeta* objectmeta = 0;
+
 		if (!cmd || !accesskey || !secretkey || !destbucketname || !destobjectname || !region || !sslstr || !srcbucketname || !srcobjectname ) {
 					snda_ecs_oneline("arguments: --cmd=copy_object --accesskey= --secretkey= --destbucket= --destkey= --region= --ssl=(0/1) --srcbucket= --srckey= ");
 					exit(-1);
 		}
-		SNDAECSUserObjectMeta* objectmeta = snda_ecs_init_user_object_meta();
+		objectmeta = snda_ecs_init_user_object_meta();
 		snda_ecs_set_object_type(objectmeta, "binary/octet-stream");
 		// furthermore, user can set user metas with snda_ecs_add_object_user_metas()
 		// all key of user metas must begin with "x-snda-meta-", and case insensitive
@@ -442,7 +472,7 @@ int main(int argc, char** args) {
 				"this is my user meta 1");
 		snda_ecs_add_object_user_metas(objectmeta, "x-SNDA-metA-2",
 				"WOO, the seconde user meta");
-		int ssl = atoi(sslstr);
+		ssl = atoi(sslstr);
 		retcode = snda_ecs_copy_object(handler, accesskey,
 				secretkey, destbucketname, destobjectname, srcbucketname,
 				srcobjectname, objectmeta, region, ssl, ret);
@@ -455,16 +485,20 @@ int main(int argc, char** args) {
 		const char* sslstr = snda_ecs_argument_retriever(argc, args, "--ssl=");
 		const char* followlocationstr = snda_ecs_argument_retriever(argc, args, "--followlocation=");
 		const char* maxredirectsstr = snda_ecs_argument_retriever(argc, args, "--maxredirects=");
+        int ssl = 0;
+        int followlocation = 0;
+		long maxredirects = 0;
+        SNDAECSUserObjectMeta* objectmeta = 0;
 
 		if (!cmd || !accesskey || !secretkey || !bucket || !objectname || !region || !sslstr || !followlocationstr || !maxredirectsstr ) {
 			snda_ecs_oneline("arguments: --cmd=initiate_multipart_upload --accesskey= --secretkey= --bucket= --key= --region= --ssl=(0/1) --followlocation=(0/1) --maxredirects= [--contenttype=]");
 			exit(-1);
 		}
-		int ssl = atoi(sslstr);
-		int followlocation = atoi(followlocationstr);
-		long maxredirects = atol(maxredirectsstr);
+		ssl = atoi(sslstr);
+		followlocation = atoi(followlocationstr);
+		maxredirects = atol(maxredirectsstr);
 
-		SNDAECSUserObjectMeta* objectmeta = snda_ecs_init_user_object_meta();
+		objectmeta = snda_ecs_init_user_object_meta();
 		if (contenttype) {
 			snda_ecs_set_object_type(objectmeta, contenttype);
 		} else {
@@ -495,22 +529,29 @@ int main(int argc, char** args) {
 		const char* sslstr = snda_ecs_argument_retriever(argc, args, "--ssl=");
 		const char* followlocationstr = snda_ecs_argument_retriever(argc, args, "--followlocation=");
 		const char* maxredirectsstr = snda_ecs_argument_retriever(argc, args, "--maxredirects=");
+        int maxuploads = 0;
+		int ssl = 0;
+		int followlocation = 0;
+		long maxdirects = 0;
 
 		if (!cmd || !accesskey || !secretkey || !bucketname || !region || !sslstr || !followlocationstr || !maxredirectsstr ) {
 			snda_ecs_oneline("arguments: --cmd=list_multipart_uploads --accesskey= --secretkey= --bucket= --region= --ssl=(0/1) --followlocation=(0/1) --maxredirects= [--prefix= --keymarker= --uploadidmarker=  --delimiter= --maxuploads=]");
 			exit(-1);
 		}
 
-		int maxuploads = maxuploadsstr == 0 ? 1000 : atoi(maxuploadsstr);
-		int ssl = atoi(sslstr);
-		int followlocation = atoi(followlocationstr);
-		long maxdirects = atol(maxredirectsstr);
+		maxuploads = maxuploadsstr == 0 ? 1000 : atoi(maxuploadsstr);
+		ssl = atoi(sslstr);
+		followlocation = atoi(followlocationstr);
+		maxdirects = atol(maxredirectsstr);
 
 		retcode = snda_ecs_list_multipart_uploads(handler, accesskey, secretkey, bucketname, prefix, keymarker, uploadidmarker, delimiter, maxuploads, region, ssl, followlocation, maxdirects, ret);
 		if (retcode == SNDA_ECS_SUCCESS) {
 			SNDAECSMultipartUploadsContent* content = snda_ecs_to_multipart_uploads_content(ret);
 			if (content) {
-				snda_ecs_onelinevaluestring("Bucket", content->bucket);
+				SNDAECSMultipartUpload* upload = content->upload;
+                SNDAECSCommonPrefix* object = content->commonprefixes;
+
+                snda_ecs_onelinevaluestring("Bucket", content->bucket);
 				snda_ecs_onelinevaluestring("Prefix", content->prefix);
 				snda_ecs_onelinevaluestring("Delimiter", content->delimiter);
 				snda_ecs_onelinevaluestring("KeyMarker", content->keymarker);
@@ -521,7 +562,6 @@ int main(int argc, char** args) {
 				snda_ecs_onelinevalueint("MaxUploads", content->maxuploads);
 
 				snda_ecs_oneline("UPLOADS/");
-				SNDAECSMultipartUpload* upload = content->upload;
 				while (upload) {
 					snda_ecs_oneline("\tUPLOAD/");
 					snda_ecs_onelinevaluestring("\t\tKey", upload->key);
@@ -533,7 +573,6 @@ int main(int argc, char** args) {
 				snda_ecs_oneline("/UPLOADS");
 
 				snda_ecs_oneline("COMMONPREFIXES/");
-				SNDAECSCommonPrefix* object = content->commonprefixes;
 				while (object) {
 					snda_ecs_oneline("\tCOMMONPREFIX/");
 					snda_ecs_onelinevaluestring("\t\tPrefix", object->commonprefix);
@@ -552,15 +591,18 @@ int main(int argc, char** args) {
 		const char* sslstr = snda_ecs_argument_retriever(argc, args, "--ssl=");
 		const char* followlocationstr = snda_ecs_argument_retriever(argc, args, "--followlocation=");
 		const char* maxredirectsstr = snda_ecs_argument_retriever(argc, args, "--maxredirects=");
+        int ssl = 0;
+		int followlocation = 0;
+		long maxdirects = 0;
 
 		if (!cmd || !accesskey || !secretkey || !bucket || !objectname || !uploadid || !region || !sslstr || !followlocationstr || !maxredirectsstr ) {
 			snda_ecs_oneline("arguments: --cmd=abort_multipart_upload --accesskey= --secretkey= --bucket= --key= --uploadid= --region= --ssl=(0/1) --followlocation=(0/1) --maxredirects=");
 			exit(-1);
 		}
 
-		int ssl = atoi(sslstr);
-		int followlocation = atoi(followlocationstr);
-		long maxdirects = atol(maxredirectsstr);
+		ssl = atoi(sslstr);
+		followlocation = atoi(followlocationstr);
+		maxdirects = atol(maxredirectsstr);
 
 		retcode = snda_ecs_abort_multipart_upload(handler, accesskey, secretkey, bucket, objectname,
 				uploadid, region, ssl, followlocation, maxdirects,
@@ -575,22 +617,27 @@ int main(int argc, char** args) {
 		const char* contentmd5 = snda_ecs_argument_retriever(argc, args, "--contenmd5=");
 		const char* region = snda_ecs_argument_retriever(argc, args, "--region=");
 		const char* sslstr = snda_ecs_argument_retriever(argc, args, "--ssl=");
+        int ssl = 0;
+		int partnumber = 0;
+		long filelength = 0;
+        FILE* fd = 0;
 
 		if (!cmd || !accesskey || !secretkey || !bucket || !objectname || !uploadid || !localfile || !filelengthstr || !partnumberstr || !region || !sslstr) {
 			snda_ecs_oneline("arguments: --cmd=upload_part --accesskey= --secretkey= --bucket= --key= --uploadid= --localfile= --filelength= --partnumber= --region= --ssl=(0/1) [--contenmd5=]");
 			exit(-1);
 		}
 
-		int ssl = atoi(sslstr);
-		int partnumber = atoi(partnumberstr);
-		long filelength = atol(filelengthstr);
+		ssl = atoi(sslstr);
+		partnumber = atoi(partnumberstr);
+		filelength = atol(filelengthstr);
 
-		FILE* fd = fopen(localfile, "rb");
+		fd = fopen(localfile, "rb");
 
 		retcode = snda_ecs_upload_part(handler, accesskey, secretkey, bucket, objectname, uploadid, partnumber,
 				snda_ecs_put_object_body, fd, filelength, contentmd5, region, ssl,
 				ret);
 
+        fclose(fd);
 
 	} else if (!strcmp(cmd, "list_parts")) {
 		const char* bucket = snda_ecs_argument_retriever(argc, args, "--bucket=");
@@ -605,21 +652,27 @@ int main(int argc, char** args) {
 		const char* sslstr = snda_ecs_argument_retriever(argc, args, "--ssl=");
 		const char* followlocationstr = snda_ecs_argument_retriever(argc, args, "--followlocation=");
 		const char* maxredirectsstr = snda_ecs_argument_retriever(argc, args, "--maxredirects=");
+        int partnumbermarker = 0;
+		int maxparts = 0;
+		int ssl = 0;
+		int followlocation = 0;
+		long maxdirects = 0;
 
 		if (!cmd || !accesskey || !secretkey || !bucket || !objectname || !uploadid || !region || !sslstr || !followlocationstr || !maxredirectsstr ) {
 			snda_ecs_oneline("arguments: --cmd=list_parts --accesskey= --secretkey= --bucket= --key= --uploadid= --region= --ssl=(0/1) --followlocation=(0/1) --maxredirects= [--partnumbermarker= --maxparts=]");
 			exit(-1);
 		}
 
-		int partnumbermarker = partnumbermarkerstr == 0 ? -1 : atoi(partnumbermarkerstr);
-		int maxparts = maxpartsstr == 0 ? 1000 : atoi(maxpartsstr);
-		int ssl = atoi(sslstr);
-		int followlocation = atoi(followlocationstr);
-		long maxdirects = atol(maxredirectsstr);
+		partnumbermarker = partnumbermarkerstr == 0 ? -1 : atoi(partnumbermarkerstr);
+		maxparts = maxpartsstr == 0 ? 1000 : atoi(maxpartsstr);
+		ssl = atoi(sslstr);
+		followlocation = atoi(followlocationstr);
+		maxdirects = atol(maxredirectsstr);
 
 		retcode = snda_ecs_list_parts(handler, accesskey, secretkey, bucket, objectname, uploadid, partnumbermarker, maxparts, region, ssl, followlocation, maxdirects, ret);
 		if (retcode == SNDA_ECS_SUCCESS) {
-			SNDAECSMultipartsContent* content = snda_ecs_to_multipart_parts(ret);
+            SNDAECSMultipartsContent* content = snda_ecs_to_multipart_parts(ret);
+            SNDAECSMultipartsPart* part = content->parts;
 			if (content) {
 				snda_ecs_onelinevaluestring("Bucket", content->bucket);
 				snda_ecs_onelinevaluestring("Key", content->key);
@@ -630,7 +683,6 @@ int main(int argc, char** args) {
 				snda_ecs_onelinevalueint("NextPartNumberMarker", content->nextpartnumbermarker);
 
 				snda_ecs_oneline("PARTS/");
-				SNDAECSMultipartsPart* part = content->parts;
 				while (part) {
 					snda_ecs_oneline("\tPART/");
 					snda_ecs_onelinevalueint("\t\tPartNumber", part->partnumber);
@@ -673,7 +725,7 @@ int main(int argc, char** args) {
 
 		snda_ecs_release_multiparts_meta(metas);
 	} else if (!strcmp(cmd, "test")) {
-		sdna_ecs_unit_test();
+		//sdna_ecs_unit_test();
 		return 0;
 	} else {
 		showhelp();
@@ -688,8 +740,8 @@ int main(int argc, char** args) {
 		// get http code
 		snda_ecs_onelinevalueint("http response code", ret->serverresponse->httpcode);
 		if (ret->serverresponse->httpcode >= 300) {
-			snda_ecs_onelinevaluestring(cmd, "FAILED WITH ERROR:");
 			SNDAECSErrorResponseContent* content = snda_ecs_to_error_response(ret);
+            snda_ecs_onelinevaluestring(cmd, "FAILED WITH ERROR:");
 	    	if (content) {
 	    		if (content->code) {
 	    			snda_ecs_onelinevaluestring("\tErrorCode", content->code);
@@ -719,6 +771,8 @@ int main(int argc, char** args) {
 	snda_ecs_release_handler(handler);
 
 	snda_ecs_global_uninit();
+
+	return 0;
 }
 
 

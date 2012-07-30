@@ -1,24 +1,26 @@
-#include <string.h>
 
-#include "../snda_ecs_sdk.h"
-#include "../snda_ecs_http_util.h"
-#include "../snda_ecs_constants.h"
-#include "../snda_ecs_common_util.h"
+#include "global.h"
 
 void list_parts_example(const char* accesskey, const char* secretkey,
 		const char* bucket, const char *region, const char * objectname,
 		const char * uploadid, int ssl, int followlocation,
 		int partnumbermarker, int maxparts, int maxdirects) {
+
+	SNDAECSHandler* handler = 0;
+	SNDAECSResult* ret = 0;
+	SNDAECSErrorCode retcode;
+
 	snda_ecs_global_init();
-	SNDAECSHandler* handler = snda_ecs_init_handler();
-	SNDAECSResult* ret = snda_ecs_init_result();
-	SNDAECSErrorCode retcode = snda_ecs_list_parts(handler, accesskey,
+	handler = snda_ecs_init_handler();
+	ret = snda_ecs_init_result();
+	retcode = snda_ecs_list_parts(handler, accesskey,
 			secretkey, bucket, objectname, uploadid, partnumbermarker,
 			maxparts, region, ssl, followlocation, maxdirects, ret);
 	if (retcode != SNDA_ECS_SUCCESS) {
 		printf("ClientErrorMessage:%s", ret->error->handlererrmsg);
 	} else if (ret->serverresponse->httpcode < 300) {
 		SNDAECSMultipartsContent* content = snda_ecs_to_multipart_parts(ret);
+		SNDAECSMultipartsPart* part = 0;
 		if (content) {
 			printf("Bucket:%s\n", content->bucket);
 			printf("Key:%s\n", content->key);
@@ -29,7 +31,7 @@ void list_parts_example(const char* accesskey, const char* secretkey,
 			printf("NextPartNumberMarker:%d\n", content->nextpartnumbermarker);
 
 			printf("PARTS/\n");
-			SNDAECSMultipartsPart* part = content->parts;
+			part = content->parts;
 			while (part) {
 				printf("\tPART/\n");
 				printf("\t\tPartNumber:%d\n", part->partnumber);
@@ -61,6 +63,9 @@ void list_parts_example(const char* accesskey, const char* secretkey,
 				printf("AllErrorMessage:%s\n", content->fullbody);
 			}
 		}
+		if(ret->serverresponse->httpcode == 505) {
+		  printf("Please check your bucketname,accessKey,SecretAccessKey,uploadid!\n");
+		}
 		snda_ecs_release_error_response_content(content);
 	}
 	snda_ecs_release_handler(handler);
@@ -68,12 +73,12 @@ void list_parts_example(const char* accesskey, const char* secretkey,
 }
 
 int main() {
-	char * accesskey = "your accesskey";
-	char * secretkey = "your secretkey";
-	char * bucket = "your bucketname";
-	char * objectname = "albums.json";
-	char * region = "huabei-1";
-	char * uploadid = "your uploadid";
+	char * accesskey = SNDA_ACCESSKEY;//;"your accessKey";
+	char * secretkey = SNDA_ACCESS_SECRET;//"your secretKey";
+	char * bucket = SNDA_BUCKET_HUADONG;//"your bucketname";
+	char * region = SDNA_REGION_HUADONG;//your region
+	char * objectname =MULTIPART_UPLOAD_OBJECT;
+	char * uploadid = "5KR75PNM9NNAF8MVD4H1MXXDN";
 	int followlocation = 0;
 	int maxdirects = 0;
 	int ssl = 0;

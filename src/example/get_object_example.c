@@ -1,24 +1,31 @@
-#include <string.h>
+#include "global.h"
+#include "../sdk/snda_ecs_common_util.h"
 
-#include "../snda_ecs_sdk.h"
-#include "../snda_ecs_http_util.h"
-#include "../snda_ecs_constants.h"
-#include "../snda_ecs_common_util.h"
 void get_object_example(const char* accesskey, const char* secretkey,
 		const char* bucket, const char *region, const char * objectname,
 		const char * locafile, long byterangefirst, long byterangelast,
 		int ssl, int followlocation, int maxredirects) {
-	snda_ecs_global_init();
-	SNDAECSHandler* handler = snda_ecs_init_handler();
-	SNDAECSResult* ret = snda_ecs_init_result();
-
+	
+	SNDAECSHandler* handler = 0;
+	SNDAECSResult* ret = 0;
 	SNDAECSByteRange* byterangeptr = 0;
+	FILE* writefd = 0;
+	SNDAECSErrorCode retcode;
+
+	snda_ecs_global_init();
+	handler = snda_ecs_init_handler();
+	ret = snda_ecs_init_result();
 	byterangeptr = snda_ecs_init_byte_range();
+
 	byterangeptr->first = byterangefirst;
 	byterangeptr->last = byterangelast;
 
-	FILE* writefd = fopen(locafile, "wb");
-	SNDAECSErrorCode retcode = snda_ecs_get_object(handler, accesskey,
+	writefd = fopen(locafile, "wb");
+	if(!writefd) {
+	   printf("Please check your localfile path!\n");
+	   return;
+	}
+	retcode = snda_ecs_get_object(handler, accesskey,
 			secretkey, bucket, objectname, byterangeptr, snda_ecs_write_fun,
 			writefd, region, ssl, followlocation, maxredirects, ret);
 	fclose(writefd);
@@ -26,9 +33,10 @@ void get_object_example(const char* accesskey, const char* secretkey,
 	if (retcode != SNDA_ECS_SUCCESS) {
 		printf("ClientErrorMessage:%s", ret->error->handlererrmsg);
 	} else if (ret->serverresponse->httpcode >= 300) {
+		SNDAECSErrorResponseContent* content = snda_ecs_to_error_response(ret);
 		printf("Get Object failed and the http code is:%d\n",
 				ret->serverresponse->httpcode);
-		SNDAECSErrorResponseContent* content = snda_ecs_to_error_response(ret);
+		
 		if (content) {
 			if (content->code) {
 				printf("ErrorCode:%s\n", content->code);
@@ -46,6 +54,9 @@ void get_object_example(const char* accesskey, const char* secretkey,
 				printf("AllErrorMessage:%s\n", content->fullbody);
 			}
 		}
+		if(ret->serverresponse->httpcode == 505) {
+		  printf("Please check your bucketname,accessKey,SecretAccessKey!\n");
+		}
 		snda_ecs_release_error_response_content(content);
 	} else {
 		printf("Get Object success and the http code is:%d\n",
@@ -57,12 +68,13 @@ void get_object_example(const char* accesskey, const char* secretkey,
 }
 
 int main() {
-	char * accesskey = "your accesskey";
-	char * secretkey = "your secretkey";
-	char * bucketname = "your bucketname";
-	char * objectname = "your objectname";
-	char * region = "huabei-1";
-	char * localfile = "/tmp/get_object_test";
+	char * accesskey = SNDA_ACCESSKEY;//;"your accessKey";
+	char * secretkey = SNDA_ACCESS_SECRET;//"your secretKey";
+	char * bucketname = SNDA_BUCKET_HUADONG;//"your bucketname";
+	char * region = SDNA_REGION_HUADONG;//your region
+	char * objectname = "test.sh";
+	//char * localfile = "/tmp/get_object_test";
+	char * localfile = "F:/test.sh";
 	long byterangefirst = 0;
 	long byterangelast = 50000;
 	int followlocation = 0;
