@@ -611,6 +611,44 @@ sndacs library provides access to [SNDA Cloud Storage](http://www.grandcloud.cn/
                               SNDAECSResult* ret);
 
 
+### Upload part - Copy
+    
+    /**
+    * Upload Part - Copy 
+    * @param SNDAECSHandler* handler, the handler you had
+    *         initialized by invoking snda_ecs_init_handler()
+    * @param const char* accesskey,your accessKey
+    * @param const char* secretkey,your secretKey
+    * @param const char* bucketname,the name of the destination bucket
+    * @param const char* objectname,the key of the destination object
+    * @param const char* uploadid,your uploadid for multipart upload
+    * @param int partnumber,partnumber of this part
+    * @param const SNDAECSUserObjectMeta* userobjectmeta,used in request headers
+    * @param const char* srcbucketname,the name of the source bucket
+    * @param const char* srcobjectname,the key of the source object
+    * @param int ssl,whether to use https
+    * @param SNDAECSResult* ret,SNDAECSResult* created from
+    *         snda_ecs_init_result(), if you want to reuse this
+    *         pointer, MAKE SURE invoke snda_ecs_reset_result
+    *         (SNDAECSResult*) to reset this pointer to initial status.
+    * return SNDAECSErrorCode
+    */
+    SNDAECSErrorCode snda_ecs_upload_part_copy(
+                              SNDAECSHandler* handler, 
+                              const char* accesskey,
+                              const char* secretkey, 
+                              const char* bucketname, 
+                              const char* objectname,
+                              const char* uploadid, 
+                              int partnumber,
+                              const char *region,
+                              const SNDAECSUserObjectMeta* userobjectmeta,
+                              const char* sbucket,
+                              const char* sobjectname,
+                              int ssl,
+                              SNDAECSResult* ret)
+            
+            
 ### List Parts
 
     /**
