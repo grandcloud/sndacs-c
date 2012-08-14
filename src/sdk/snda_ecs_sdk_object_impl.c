@@ -261,6 +261,7 @@ SNDAECSErrorCode snda_ecs_head_object(SNDAECSHandler* handler, const char* acces
 }
 
 
+
 /**
  * Copy Object
  * @param SNDAECSHandler* handler, the handler you had
@@ -272,8 +273,6 @@ SNDAECSErrorCode snda_ecs_head_object(SNDAECSHandler* handler, const char* acces
  * @param const char* srcbucketname,the name of the source bucket
  * @param const char* srcobjectname,the key of the source object
  * @param const SNDAECSUserObjectMeta* userobjectmeta,used in request headers
- * @param const char* region,region of your bucket,region
- *        currently support "huadong-1", "huabei-1"
  * @param int ssl,whether to use https
  * @param SNDAECSResult* ret,SNDAECSResult* created from
  *         snda_ecs_init_result(), if you want to reuse this
@@ -283,10 +282,9 @@ SNDAECSErrorCode snda_ecs_head_object(SNDAECSHandler* handler, const char* acces
  */
 SNDAECSErrorCode snda_ecs_copy_object(SNDAECSHandler* handler, const char* accesskey,
 					 const char* secretkey, const char* destbucketname,
-					 const char* destobjectname,const char *srcbucketname,
+					 const char* destobjectname,const char * region,const char *srcbucketname,
 					 const char * srcobjectname,const SNDAECSUserObjectMeta* userobjectmeta,
-					 const char* region, int ssl,
-					 SNDAECSResult* ret) {
+					 int ssl,SNDAECSResult* ret) {
     SNDAECSErrorCode retcode = SNDA_ECS_ERROR;
     SNDAECSReadBuff buff;
     SNDAECSUserObjectMeta* innermeta = 0;
@@ -303,7 +301,7 @@ SNDAECSErrorCode snda_ecs_copy_object(SNDAECSHandler* handler, const char* acces
 
 	src_object_info = (char*)malloc(strlen("/") + strlen(srcbucketname) + strlen("/")+strlen(srcobjectname)+1);
 	sprintf(src_object_info,"/%s/%s",srcbucketname,srcobjectname);
-	snda_ecs_add_object_user_metas(innermeta, "x-SNDA-copy-source", src_object_info);
+	snda_ecs_add_object_user_metas(innermeta, "x-snda-copy-source", src_object_info);
 	retcode = snda_ecs_common_opt(handler, accesskey, secretkey,
 			destbucketname, region, subresource, subresource, ssl, 0, innermeta,
 			SNDA_ECS_PUT, SNDA_ECS_NOT_FOLLOW_LOCATION, 0L,
@@ -318,6 +316,66 @@ SNDAECSErrorCode snda_ecs_copy_object(SNDAECSHandler* handler, const char* acces
 
 	return retcode;
 
+}
+
+/**
+ * Upload Part - Copy 
+ * @param SNDAECSHandler* handler, the handler you had
+ *   	   initialized by invoking snda_ecs_init_handler()
+ * @param const char* accesskey,your accessKey
+ * @param const char* secretkey,your secretKey
+ * @param const char* bucketname,the name of the destination bucket
+ * @param const char* objectname,the key of the destination object
+ * @param const char* uploadid,your uploadid for multipart upload
+ * @param int partnumber,partnumber of this part
+ * @param const SNDAECSUserObjectMeta* userobjectmeta,used in request headers
+ * @param const char* srcbucketname,the name of the source bucket
+ * @param const char* srcobjectname,the key of the source object
+ * @param int ssl,whether to use https
+ * @param SNDAECSResult* ret,SNDAECSResult* created from
+ *         snda_ecs_init_result(), if you want to reuse this
+ *         pointer, MAKE SURE invoke snda_ecs_reset_result
+ *         (SNDAECSResult*) to reset this pointer to initial status.
+ * return SNDAECSErrorCode
+ */
+SNDAECSErrorCode snda_ecs_upload_part_copy(SNDAECSHandler* handler, const char* accesskey,
+		const char* secretkey, const char* bucketname, const char* objectname,
+		const char* uploadid, int partnumber,const char *region,const SNDAECSUserObjectMeta* userobjectmeta,
+		const char* sbucket,const char* sobjectname,int ssl,SNDAECSResult* ret)
+{
+	SNDAECSReadBuff buff;
+    SNDAECSUserObjectMeta* innermeta = 0;
+    SNDAECSErrorCode retcode = SNDA_ECS_ERROR;
+    int len = strlen("/") + strlen(objectname) +
+			strlen("&uploadId=")  + strlen(uploadid) +
+			strlen("?partNumber=") + 16;
+	char * subresource = (char*)malloc(len);
+	char *copysource = 0;
+
+	sprintf(subresource, "/%s?partNumber=%d&uploadId=%s", objectname, partnumber, uploadid);
+	
+	buff.databuff = 0;
+	buff.consumed = 0;
+	buff.datasize = 0;
+    innermeta = snda_ecs_init_user_object_meta();
+	snda_ecs_copy_user_object_meta(innermeta, userobjectmeta);
+	copysource = (char*)malloc(strlen("/") + strlen(sbucket) + strlen("/") + strlen(sobjectname)+2);
+	sprintf(copysource,"/%s/%s",sbucket,sobjectname);
+	snda_ecs_add_object_user_metas(innermeta,"x-snda-copy-source",copysource);
+     
+	retcode = snda_ecs_common_opt(handler, accesskey, secretkey,
+			bucketname, region, subresource, subresource, ssl, 0, innermeta,
+			SNDA_ECS_PUT, SNDA_ECS_NOT_FOLLOW_LOCATION, 0L,
+			snda_ecs_put_object_body, &buff, buff.datasize,
+			snda_ecs_get_server_response_body,
+			ret->serverresponse->responsebody,
+			ret);
+
+
+	snda_ecs_release_user_object_meta(innermeta);
+    snda_ecs_free_char_ptr(subresource);
+	snda_ecs_free_char_ptr(copysource);//mark
+	return retcode;
 }
 
 SNDAECSObjectMeta* snda_ecs_to_object_meta(SNDAECSResult* ret) {

@@ -47,6 +47,7 @@ void abort_multipart_upload_example(const char* accesskey,
 	}
 	snda_ecs_release_handler(handler);
 	snda_ecs_relase_result(ret);
+	snda_ecs_global_uninit();
 }
 
 int main() {

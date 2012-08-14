@@ -24,13 +24,14 @@ void head_object_example(const char* accesskey, const char* secretkey,
 		printf("ClientErrorMessage:%s", ret->error->handlererrmsg);
 	} else if (ret->serverresponse->httpcode >= 300) {
 		SNDAECSErrorResponseContent* content = snda_ecs_to_error_response(ret);
+		printf("Error,HTTP Code:%d\n", ret->serverresponse->httpcode);
 		if(content) {
-		printf("ErrorCode:%s\n", content->code);
-		printf("ErrorMessage:%s\n", content->message);
-		printf("Resource:%s\n", content->resource);
-		printf("RequestId:%s\n", content->requestid);
-		printf("AllErrorMessage:%s\n", content->fullbody);
-		snda_ecs_release_error_response_content(content);
+			printf("ErrorCode:%s\n", content->code);
+			printf("ErrorMessage:%s\n", content->message);
+			printf("Resource:%s\n", content->resource);
+			printf("RequestId:%s\n", content->requestid);
+			printf("AllErrorMessage:%s\n", content->fullbody);
+			snda_ecs_release_error_response_content(content);
 		}
 		if(ret->serverresponse->httpcode == 505) {
 		  printf("Please check your bucketname,accessKey,SecretAccessKey!\n");
@@ -52,6 +53,7 @@ void head_object_example(const char* accesskey, const char* secretkey,
 
 	snda_ecs_release_handler(handler);
 	snda_ecs_relase_result(ret);
+	snda_ecs_global_uninit();
 }
 
 int main() {

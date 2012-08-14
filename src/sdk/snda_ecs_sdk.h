@@ -704,17 +704,17 @@ SNDAECSErrorCode snda_ecs_head_object(SNDAECSHandler* handler, const char* acces
 SNDAECSObjectMeta* snda_ecs_to_object_meta(SNDAECSResult* ret);
 
 /**
+ * Copy Object
  * @param SNDAECSHandler* handler, the handler you had
  *   	   initialized by invoking snda_ecs_init_handler()
  * @param const char* accesskey,your accessKey
  * @param const char* secretkey,your secretKey
  * @param const char* destbucketname,the name of the destination bucket
  * @param const char* destobjectname,the key of the destination object
+ * @param const char * region,your destination bucket's region
  * @param const char* srcbucketname,the name of the source bucket
  * @param const char* srcobjectname,the key of the source object
  * @param const SNDAECSUserObjectMeta* userobjectmeta,used in request headers
- * @param const char* region,region of your bucket,region
- *        currently support "huadong-1", "huabei-1"
  * @param int ssl,whether to use https
  * @param SNDAECSResult* ret,SNDAECSResult* created from
  *         snda_ecs_init_result(), if you want to reuse this
@@ -723,12 +723,10 @@ SNDAECSObjectMeta* snda_ecs_to_object_meta(SNDAECSResult* ret);
  * return SNDAECSErrorCode
  */
 SNDAECSErrorCode snda_ecs_copy_object(SNDAECSHandler* handler, const char* accesskey,
-									 const char* secretkey, const char* destbucketname,
-									 const char* destobjectname,const char *srcbucketname,
-									 const char * srcobjectname,const SNDAECSUserObjectMeta* userobjectmeta,
-									 const char* region, int ssl,
-									 SNDAECSResult* ret);
-
+					 const char* secretkey, const char* destbucketname,
+					 const char* destobjectname,const char * region,const char *srcbucketname,
+					 const char * srcobjectname,const SNDAECSUserObjectMeta* userobjectmeta,
+					 int ssl,SNDAECSResult* ret);
 /* ================================================================================================== *
  * ============================================= SNDA =============================================== *
  * ================================= GrandCloud Elastic CloudStorage ================================ *
@@ -939,6 +937,32 @@ SNDAECSErrorCode snda_ecs_complete_multipart_upload(SNDAECSHandler* handler, con
 		const char* uploadid, const SNDAECSMultipartsMeta* partsmeta, const char* region, int ssl,
 		SNDAECSFollowLocation followlocation, long maxredirects,
 		SNDAECSResult* ret);
+
+/**
+ * Upload Part - Copy 
+ * @param SNDAECSHandler* handler, the handler you had
+ *   	   initialized by invoking snda_ecs_init_handler()
+ * @param const char* accesskey,your accessKey
+ * @param const char* secretkey,your secretKey
+ * @param const char* bucketname,the name of the destination bucket
+ * @param const char* objectname,the key of the destination object
+ * @param const char* uploadid,your uploadid for multipart upload
+ * @param int partnumber,partnumber of this part
+ * @param const char * region,your destination bucket's region
+ * @param const SNDAECSUserObjectMeta* userobjectmeta,used in request headers
+ * @param const char* srcbucketname,the name of the source bucket
+ * @param const char* srcobjectname,the key of the source object
+ * @param int ssl,whether to use https
+ * @param SNDAECSResult* ret,SNDAECSResult* created from
+ *         snda_ecs_init_result(), if you want to reuse this
+ *         pointer, MAKE SURE invoke snda_ecs_reset_result
+ *         (SNDAECSResult*) to reset this pointer to initial status.
+ * return SNDAECSErrorCode
+ */
+SNDAECSErrorCode snda_ecs_upload_part_copy(SNDAECSHandler* handler, const char* accesskey,
+		const char* secretkey, const char* bucketname, const char* objectname,
+		const char* uploadid, int partnumber,const char * region,const SNDAECSUserObjectMeta* userobjectmeta,
+		const char* sbucket,const char* sobjectname,int ssl,SNDAECSResult* ret);
 
 /* ================================================================================================== *
  * ============================================= SNDA =============================================== *

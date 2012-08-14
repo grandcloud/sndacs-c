@@ -56,6 +56,7 @@ void put_object_example(const char* accesskey, const char* secretkey,
 
 	snda_ecs_release_handler(handler);
 	snda_ecs_relase_result(ret);
+	snda_ecs_global_uninit();
 }
 
 int main() {

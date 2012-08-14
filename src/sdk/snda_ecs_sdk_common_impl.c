@@ -576,6 +576,17 @@ int snda_ecs_is_result_with_content(SNDAECSResult* result) {
 		result->serverresponse->responsebody->retbodysize > 0;
 }
 
+char * snda_ecs_get_full_response(SNDAECSResult* ret) {
+    if (!snda_ecs_is_result_with_content(ret)) {
+		return NULL;
+	} else {
+		char * result = (char*)calloc(ret->serverresponse->responsebody->retbodysize + 1, sizeof(char));
+		memcpy(result,ret->serverresponse->responsebody->retbody,
+		ret->serverresponse->responsebody->retbodysize);
+		return result;
+	}
+}
+
 SNDAECSErrorResponseContent* snda_ecs_to_error_response(SNDAECSResult* result) {
 	int i = 0;    
     xmlDocPtr doc = 0;
