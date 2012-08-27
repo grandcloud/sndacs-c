@@ -75,7 +75,7 @@ typedef struct SNDAECSResult {
 	SNDAECSServerResponse * serverresponse;
 } SNDAECSResult;
 SNDAECSResult* snda_ecs_init_result();
-void snda_ecs_relase_result(SNDAECSResult* ret);
+void snda_ecs_release_result(SNDAECSResult* ret);
 
 
 typedef struct SNDAECSErrorResponseContent {
@@ -726,7 +726,7 @@ SNDAECSErrorCode snda_ecs_copy_object(SNDAECSHandler* handler, const char* acces
 					 const char* secretkey, const char* destbucketname,
 					 const char* destobjectname,const char * region,const char *srcbucketname,
 					 const char * srcobjectname,const SNDAECSUserObjectMeta* userobjectmeta,
-					 int ssl,SNDAECSResult* ret);
+					 int ssl, SNDAECSResult* ret);
 /* ================================================================================================== *
  * ============================================= SNDA =============================================== *
  * ================================= GrandCloud Elastic CloudStorage ================================ *

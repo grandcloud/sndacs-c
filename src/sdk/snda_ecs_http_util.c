@@ -201,6 +201,9 @@ void snda_ecs_set_handler_attributes(
 		CallbackFunPtr writefun, void* writerptr, SNDAECSHandleType type,
 		SNDAECSFollowLocation followlocation, long maxredirects)
 {
+	curl_easy_reset(handler->handler);              // reset for reusable
+
+	curl_easy_setopt(handler->handler, CURLOPT_ERRORBUFFER, handler->handlererrmsg);
 	curl_easy_setopt(handler->handler, CURLOPT_HTTPHEADER, headers);
 	curl_easy_setopt(handler->handler, CURLOPT_URL, url);
 

@@ -51,7 +51,7 @@ SNDAECSHandler* snda_ecs_init_handler() {
 	}
 	handler->handler = curl;
 	handler->handlererrmsg = handlererrmsg;
-	curl_easy_setopt(handler->handler, CURLOPT_ERRORBUFFER, handler->handlererrmsg);
+
 
 	return handler;
 }
@@ -132,7 +132,7 @@ SNDAECSResult* snda_ecs_init_result() {
 	return res;
 }
 
-void snda_ecs_relase_result(SNDAECSResult* result) {
+void snda_ecs_release_result(SNDAECSResult* result) {
 	if (result) {
 		if (result->error) {
 			snda_ecs_release_handler_error(result->error);

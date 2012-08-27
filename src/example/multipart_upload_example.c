@@ -70,7 +70,7 @@ SNDAECSInitiateMultipartUploadResult * initiate_multipart_upload(
 	}
 
 	snda_ecs_release_handler(handler);
-	snda_ecs_relase_result(ret);
+	snda_ecs_release_result(ret);
 	snda_ecs_global_uninit();
 	return multipartcontent;
 }
@@ -155,7 +155,7 @@ int multipart_upload(const char* accesskey, const char* secretkey,
 
 	fclose(fd);
 	snda_ecs_release_handler(handler);
-	snda_ecs_relase_result(ret);
+	snda_ecs_release_result(ret);
 	snda_ecs_global_uninit();
 	return success;
 }
@@ -230,7 +230,7 @@ SNDAECSMultipartsContent* list_parts(const char* accesskey,
 		snda_ecs_release_error_response_content(content);
 	}
 	snda_ecs_release_handler(handler);
-	snda_ecs_relase_result(ret);
+	snda_ecs_release_result(ret);
 	snda_ecs_global_uninit();
 	return multipartcontent;
 }
@@ -299,7 +299,7 @@ void complete_multipart_upload(const char* accesskey,
 				ret->serverresponse->httpcode);
 	}
 	snda_ecs_release_handler(handler);
-	snda_ecs_relase_result(ret);
+	snda_ecs_release_result(ret);
 	snda_ecs_global_uninit();
 }
 
