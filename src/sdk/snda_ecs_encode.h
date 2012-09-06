@@ -9,6 +9,9 @@
 #ifndef SNDA_ECS_ENCODE_H
 #define SNDA_ECS_ENCODE_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /**
  * @return a allocated buffer contains a base64 string terminated with '\0',
@@ -22,6 +25,9 @@ char * base64_encode(const char* inputbuff, int inputlen);
  */
 int hmac_sha1(const char* secretkey, const char * message, int messagelen, char *hmacsha1);
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /*SNDA_ECS_ENCODE_H*/
 

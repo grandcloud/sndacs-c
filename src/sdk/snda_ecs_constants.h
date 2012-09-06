@@ -9,6 +9,10 @@
 #ifndef SNDA_ECS_CONSTANTS_H
 #define SNDA_ECS_CONSTANTS_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #undef  _FILE_OFFSET_BITS
 #define _FILE_OFFSET_BITS 64
 
@@ -31,5 +35,8 @@
 
 #define S_SNDA_ECS_CLIENT_ERROR_LEN (512)
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* SNDA_ECS_CONSTANTS_H */

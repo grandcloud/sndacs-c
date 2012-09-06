@@ -31,7 +31,7 @@ void get_service_example(const char* accesskey, const char* secretkey,int ssl) {
 	}
 
 	snda_ecs_release_handler(handler);
-	snda_ecs_relase_result(ret);
+	snda_ecs_release_result(ret);
 	snda_ecs_global_uninit();
 }
 

@@ -41,7 +41,7 @@ void head_object_example(const char* accesskey, const char* secretkey,
 		SNDAECSKVList* p = 0;
 		printf("Etag;%s\n", objectmeta->etag);
 		printf("Content-Type:%s\n", objectmeta->contenttype);
-		printf("Content-Length:%s\n", objectmeta->lastmodified);
+		printf("Content-Length:%ld\n", objectmeta->contentlength);
 		printf("Last-Modified:%s\n", objectmeta->lastmodified);
 		p = objectmeta->usermetas;
 		for (; p; p = p->next) {
@@ -52,7 +52,7 @@ void head_object_example(const char* accesskey, const char* secretkey,
 	}
 
 	snda_ecs_release_handler(handler);
-	snda_ecs_relase_result(ret);
+	snda_ecs_release_result(ret);
 	snda_ecs_global_uninit();
 }
 

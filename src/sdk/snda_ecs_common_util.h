@@ -9,6 +9,9 @@
 #ifndef SNDA_ECS_COMMON_UTIL_H
 #define SNDA_ECS_COMMON_UTIL_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include <string.h>
 #include <ctype.h>
@@ -73,5 +76,9 @@ static inline void snda_ecs_set_handler_error(SNDAECSResult* ret, const char* ms
 }
 
 char* snda_ecs_get_content_type(const char* filename, char* contenttype);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // SNDA_ECS_COMMON_UTIL_H

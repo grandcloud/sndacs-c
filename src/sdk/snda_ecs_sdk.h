@@ -9,6 +9,10 @@
 #ifndef SNDA_ECS_SDK_H
 #define SNDA_ECS_SDK_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #if defined(WIN32) && !defined(__cplusplus)
 #define inline __inline
 #endif
@@ -75,7 +79,7 @@ typedef struct SNDAECSResult {
 	SNDAECSServerResponse * serverresponse;
 } SNDAECSResult;
 SNDAECSResult* snda_ecs_init_result();
-void snda_ecs_relase_result(SNDAECSResult* ret);
+void snda_ecs_release_result(SNDAECSResult* ret);
 
 
 typedef struct SNDAECSErrorResponseContent {
@@ -275,7 +279,8 @@ void snda_ecs_release_multipart_uploads_content(SNDAECSMultipartUploadsContent* 
 
 /**
  * This function gets called many times with consuming size*number bytes each time
- * @brief user can define their callback function to get or put there function
+ * @brief user can define their callback function to decide where and how to put or get data,
+ *        usage example in src/example/get_object_example.c and src/example/put_object_example.c
  * @param ptr pointer where retrieve data from when get or where write data to when put
  * @param stream pointer to user stream
  * @param size * number data size need to consumed each time
@@ -592,7 +597,9 @@ void snda_ecs_add_object_user_metas(SNDAECSUserObjectMeta* const objectmeta, con
  * @param const char* secretkey,your secretKey
  * @param const char* bucketname,your bucketname
  * @param const char* objectname,your object name
- * @param CallbackFunPtr readFun, used as CURLOPT_READDATA,usually is snda_ecs_put_object_body
+ * @param CallbackFunPtr readFun, used as CURLOPT_READDATA, an example read from file 
+ *        is snda_ecs_put_object_body() and read from memory is snda_ecs_put_mem_body(), 
+ *        both defined in snda_ecs_http_util.c
  * @param void* inputstream, data stream for upload ,usually a pointer of file opened with "rb"
  * @param long contentlength,the size of the object,in bytes
  * @param const SNDAECSUserObjectMeta* userobjectmeta,used in request headers
@@ -648,8 +655,10 @@ SNDAECSErrorCode snda_ecs_delete_object(SNDAECSHandler* handler, const char* acc
  * @param const char* secretkey,your secretKey
  * @param const char* bucketname,your bucketname
  * @param const char* objectname,your object name
- * @param SNDAECSByteRange* byterange,the specified range bytes of the object.
- * @param CallbackFunPtr writeFun,used as CURLOPT_READFUNCTION,usually is snda_ecs_write_fun();
+ * @param SNDAECSByteRange* byterange,the specified range bytes of the object, 
+ *        range [first, last]. eg, for first 500 bytes, set byte range to [0-499]
+ * @param CallbackFunPtr writeFun,used as CURLOPT_WRITEFUNCTION, 
+ *        an example write to file is snda_ecs_write_fun() defined in snda_ecs_http_util.c;
  * @param  void* outputstream, usually a pointer of file opend with "wb";
  * @param const char* region,region of your bucket,region
  *        currently support "huadong-1", "huabei-1"
@@ -680,7 +689,7 @@ SNDAECSErrorCode snda_ecs_get_object(SNDAECSHandler* handler, const char* access
  * @param const char* secretkey,your secretKey
  * @param const char* bucketname,your bucketname
  * @param const char* objectname,your object name
- * @param SNDAECSByteRange* byterange,the specified range bytes of the object.
+ * @param SNDAECSByteRange* byterange,the specified range bytes of the object,range [first, last]
  * @param const char* region,region of your bucket,region
  *        currently support "huadong-1", "huabei-1"
  * @param int ssl,whether to use https
@@ -726,7 +735,7 @@ SNDAECSErrorCode snda_ecs_copy_object(SNDAECSHandler* handler, const char* acces
 					 const char* secretkey, const char* destbucketname,
 					 const char* destobjectname,const char * region,const char *srcbucketname,
 					 const char * srcobjectname,const SNDAECSUserObjectMeta* userobjectmeta,
-					 int ssl,SNDAECSResult* ret);
+					 int ssl, SNDAECSResult* ret);
 /* ================================================================================================== *
  * ============================================= SNDA =============================================== *
  * ================================= GrandCloud Elastic CloudStorage ================================ *
@@ -844,7 +853,9 @@ SNDAECSErrorCode snda_ecs_abort_multipart_upload(SNDAECSHandler* handler, const 
  * @param const char* objectname,your object name
  * @param const char* uploadid,your uploadid for multipart upload
  * @param int partnumber,partnumber of this part
- * @param CallbackFunPtr readFun, used as CURLOPT_READDATA,usually is snda_ecs_put_object_body
+ * @param CallbackFunPtr readFun, used as CURLOPT_READDATA,an example read from file 
+ *        is snda_ecs_put_object_body() and read from memory is snda_ecs_put_mem_body(), 
+ *        both defined in snda_ecs_http_util.c
  * @param void* inputstream, data stream for upload ,usually a pointer of file opened with "rb"
  * @param long contentlength,the size of the object,in bytes
  * @param const char* contentmd5,contentmd5 of this part(can be null)
@@ -973,5 +984,9 @@ SNDAECSErrorCode snda_ecs_upload_part_copy(SNDAECSHandler* handler, const char* 
 static void sdna_ecs_unit_test() {
 }
 */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* SNDA_ECS_SDK_H */

@@ -9,6 +9,10 @@
 #ifndef SNDA_ECS_HTTP_URL_H
 #define SNDA_ECS_HTTP_URL_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "snda_ecs_sdk.h"
 
 
@@ -85,6 +89,8 @@ size_t snda_ecs_get_server_response_body(void *ptr, size_t size, size_t number, 
 
 size_t snda_ecs_put_xml_body(void *ptr, size_t size, size_t nmemb, void *stream);
 
+size_t snda_ecs_put_mem_body(void *ptr, size_t size, size_t nmemb, void *stream);
+
 size_t snda_ecs_put_object_body(void *ptr, size_t size, size_t nmemb, void *stream);
 
 size_t snda_ecs_write_fun(void *ptr, size_t size, size_t number, void *stream);
@@ -118,6 +124,10 @@ SNDAECSErrorCode snda_ecs_common_opt(SNDAECSHandler* handler, const char* access
 		const SNDAECSUserObjectMeta* userobjectmeta, SNDAECSHandleType type, SNDAECSFollowLocation followlocation, long maxredirects,
 		CallbackFunPtr readfun, void* inputstream, long inputlength, CallbackFunPtr writefun, void* outputstream,
 		SNDAECSResult* ret);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /*SNDA_ECS_HTTP_URL_H*/
 

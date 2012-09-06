@@ -441,7 +441,7 @@ int main(int argc, char** args) {
 
 			snda_ecs_onelinevaluestring("Etag", objectmeta->etag);
 			snda_ecs_onelinevaluestring("Content-Type", objectmeta->contenttype);
-			snda_ecs_onelinevaluestring("Content-Length", objectmeta->lastmodified);
+			snda_ecs_onelinevaluelong("Content-Length", objectmeta->contentlength);
 			snda_ecs_onelinevaluestring("Last-Modified", objectmeta->lastmodified);
 
             for (; p; p = p->next) {
@@ -474,8 +474,8 @@ int main(int argc, char** args) {
 				"WOO, the seconde user meta");
 		ssl = atoi(sslstr);
 		retcode = snda_ecs_copy_object(handler, accesskey,
-				secretkey, destbucketname, destobjectname, srcbucketname,
-				srcobjectname, objectmeta, region, ssl, ret);
+				secretkey, destbucketname, destobjectname, region, srcbucketname,
+				srcobjectname, objectmeta, ssl, ret);
 		snda_ecs_release_user_object_meta(objectmeta);
 	} else if (!strcmp(cmd, "initiate_multipart_upload")) {
 		const char* bucket = snda_ecs_argument_retriever(argc, args, "--bucket=");
@@ -766,7 +766,7 @@ int main(int argc, char** args) {
 	}
 
 
-	snda_ecs_relase_result(ret);
+	snda_ecs_release_result(ret);
 
 	snda_ecs_release_handler(handler);
 

@@ -148,7 +148,10 @@ size_t snda_ecs_get_server_response_body(void *ptr, size_t size, size_t number, 
     return comedatasize;
 }
 
-size_t snda_ecs_put_xml_body(void *ptr, size_t size, size_t nmemb, void *stream)
+size_t snda_ecs_put_xml_body(void *ptr, size_t size, size_t nmemb, void *stream) {
+	return snda_ecs_put_mem_body(ptr, size, nmemb, stream);	
+}
+size_t snda_ecs_put_mem_body(void *ptr, size_t size, size_t nmemb, void *stream)
 {
 	SNDAECSReadBuff *buff = (SNDAECSReadBuff*)stream;
 	long remain = buff->datasize - buff->consumed;
@@ -201,6 +204,9 @@ void snda_ecs_set_handler_attributes(
 		CallbackFunPtr writefun, void* writerptr, SNDAECSHandleType type,
 		SNDAECSFollowLocation followlocation, long maxredirects)
 {
+	curl_easy_reset(handler->handler);              // reset for reusable
+
+	curl_easy_setopt(handler->handler, CURLOPT_ERRORBUFFER, handler->handlererrmsg);
 	curl_easy_setopt(handler->handler, CURLOPT_HTTPHEADER, headers);
 	curl_easy_setopt(handler->handler, CURLOPT_URL, url);
 
