@@ -326,6 +326,7 @@ typedef enum SNDA_ECS_ERROR_CODE
     SNDA_ECS_CURL_GLOBAL_INIT_FAIL,
 
     SNDA_ECS_BAD_MULTIPARTS_METAS,
+    SNDA_ECS_BAD_ARGUMENTS,
 
     /**
      * client unknown error

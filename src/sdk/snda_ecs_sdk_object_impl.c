@@ -116,6 +116,11 @@ SNDAECSErrorCode snda_ecs_put_object(SNDAECSHandler* handler, const char* access
 		const SNDAECSUserObjectMeta* userobjectmeta, const char* region, int ssl,
 		SNDAECSResult* ret)
 {
+	if (!objectname || !strlen(objectname)) {
+		snda_ecs_set_handler_error(ret, "object name must be set in PutObject.");
+		return SNDA_ECS_BAD_ARGUMENTS;
+	}
+
 	return snda_ecs_put_object_inner(handler, accesskey, secretkey, bucketname, objectname,
 			readFun, inputstream, contentlength, userobjectmeta, region, ssl,
 			SNDA_ECS_NOT_FOLLOW_LOCATION , 0L,
@@ -150,6 +155,11 @@ SNDAECSErrorCode snda_ecs_delete_object(SNDAECSHandler* handler, const char* acc
 		SNDAECSFollowLocation followlocation, long maxredirects,
 		SNDAECSResult* ret)
 {
+	if (!objectname || !strlen(objectname)) {
+		snda_ecs_set_handler_error(ret, "object name must be set in DeleteObject.");
+		return SNDA_ECS_BAD_ARGUMENTS;
+	}
+
     SNDAECSErrorCode retcode = SNDA_ECS_ERROR;
 	char* subresource= (char*)malloc(strlen("/") + strlen(objectname) + 1);
 	sprintf(subresource, "/%s", objectname);
@@ -198,6 +208,11 @@ SNDAECSErrorCode snda_ecs_get_object(SNDAECSHandler* handler, const char* access
 		SNDAECSFollowLocation followlocation, long maxredirects,
 		SNDAECSResult* ret)
 {
+	if (!objectname || !strlen(objectname)) {
+		snda_ecs_set_handler_error(ret, "object name must be set in GetObject.");
+		return SNDA_ECS_BAD_ARGUMENTS;
+	}
+
     SNDAECSErrorCode retcode = SNDA_ECS_ERROR;
 	char* subresource = (char*)malloc(strlen("/") + strlen(objectname) + 1);
 
@@ -244,6 +259,11 @@ SNDAECSErrorCode snda_ecs_head_object(SNDAECSHandler* handler, const char* acces
 		const char* region, int ssl, SNDAECSFollowLocation followlocation, long maxredirects,
 		SNDAECSResult* ret)
 {
+	if (!objectname || !strlen(objectname)) {
+		snda_ecs_set_handler_error(ret, "object name must be set in HeadObject.");
+		return SNDA_ECS_BAD_ARGUMENTS;
+	}
+
     SNDAECSErrorCode retcode = SNDA_ECS_ERROR;
     char* subresource = (char*)malloc(strlen("/") + strlen(objectname) + 1);
 	sprintf(subresource, "/%s", objectname);
@@ -282,8 +302,8 @@ SNDAECSErrorCode snda_ecs_head_object(SNDAECSHandler* handler, const char* acces
  */
 SNDAECSErrorCode snda_ecs_copy_object(SNDAECSHandler* handler, const char* accesskey,
 					 const char* secretkey, const char* destbucketname,
-					 const char* destobjectname,const char * region,const char *srcbucketname,
-					 const char * srcobjectname,const SNDAECSUserObjectMeta* userobjectmeta,
+					 const char* destobjectname, const char * region, const char *srcbucketname,
+					 const char * srcobjectname, const SNDAECSUserObjectMeta* userobjectmeta,
 					 int ssl,SNDAECSResult* ret) {
     SNDAECSErrorCode retcode = SNDA_ECS_ERROR;
     SNDAECSReadBuff buff;
@@ -340,8 +360,8 @@ SNDAECSErrorCode snda_ecs_copy_object(SNDAECSHandler* handler, const char* acces
  */
 SNDAECSErrorCode snda_ecs_upload_part_copy(SNDAECSHandler* handler, const char* accesskey,
 		const char* secretkey, const char* bucketname, const char* objectname,
-		const char* uploadid, int partnumber,const char *region,const SNDAECSUserObjectMeta* userobjectmeta,
-		const char* sbucket,const char* sobjectname,int ssl,SNDAECSResult* ret)
+		const char* uploadid, int partnumber,const char *region, const SNDAECSUserObjectMeta* userobjectmeta,
+		const char* sbucket, const char* sobjectname, int ssl, SNDAECSResult* ret)
 {
 	SNDAECSReadBuff buff;
     SNDAECSUserObjectMeta* innermeta = 0;
@@ -361,7 +381,7 @@ SNDAECSErrorCode snda_ecs_upload_part_copy(SNDAECSHandler* handler, const char* 
 	snda_ecs_copy_user_object_meta(innermeta, userobjectmeta);
 	copysource = (char*)malloc(strlen("/") + strlen(sbucket) + strlen("/") + strlen(sobjectname)+2);
 	sprintf(copysource,"/%s/%s",sbucket,sobjectname);
-	snda_ecs_add_object_user_metas(innermeta,"x-snda-copy-source",copysource);
+	snda_ecs_add_object_user_metas(innermeta, "x-snda-copy-source", copysource);
      
 	retcode = snda_ecs_common_opt(handler, accesskey, secretkey,
 			bucketname, region, subresource, subresource, ssl, 0, innermeta,
