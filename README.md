@@ -254,7 +254,7 @@ sndacs library provides access to [SNDA Cloud Storage](http://www.grandcloud.cn/
      * @param const char* secretkey,your secretKey
      * @param const char* bucketname,your bucketname
      * @param const char* objectname,your object name
-     * @param CallbackFunPtr readFun, used as CURLOPT_READDATA,usually is snda_ecs_put_object_body
+     * @param CallbackFunPtr readFun, used as CURLOPT_READDATA,usually is snda_ecs_put_object_body or snda_ecs_put_mem_body,
      * @param void* inputstream, data stream for upload ,usually a pointer of file opened with "rb"
      * @param long contentlength,the size of the object,in bytes
      * @param const SNDAECSUserObjectMeta* userobjectmeta,used in request headers
