@@ -69,43 +69,6 @@ SNDAECSErrorCode snda_ecs_put_bucket(SNDAECSHandler* handler, const char* access
 }
 
 
-SNDAECSErrorCode snda_ecs_put_bucket_policy(SNDAECSHandler* handler, const char* accesskey,
-		const char* secretkey, const char* bucketname, const char* policy,
-		int ssl, SNDAECSResult* ret)
-{
-	const char* subresource = "?policy";
-	const char* region = 0;
-    SNDAECSErrorCode retcode = SNDA_ECS_ERROR;
-
-	SNDAECSReadBuff buff;
-	buff.consumed = 0;
-	buff.databuff = calloc(strlen(policy) + 1, sizeof(char));
-	memcpy(buff.databuff, policy, strlen(policy));
-	buff.datasize = strlen(buff.databuff);
-
-	retcode = snda_ecs_bucket_opt(handler, accesskey, secretkey,
-			bucketname, region, subresource, subresource, ssl, &buff,
-			SNDA_ECS_PUT, SNDA_ECS_NOT_FOLLOW_LOCATION, 0,
-			ret);
-
-	free(buff.databuff);
-
-	return retcode;
-}
-
-
-
-SNDAECSErrorCode snda_ecs_get_bucket_policy(SNDAECSHandler* handler, const char* accesskey,
-		const char* secretkey, const char* bucketname, int ssl, SNDAECSResult* ret)
-{
-	const char* subresource = "?policy";
-	const char* region = 0;
-
-	return snda_ecs_bucket_opt(handler, accesskey, secretkey,
-			bucketname, region, subresource, subresource, ssl, 0,
-			SNDA_ECS_GET, SNDA_ECS_NOT_FOLLOW_LOCATION, 0,
-			ret);
-}
 
 SNDAECSErrorCode snda_ecs_delete_bucket_policy(SNDAECSHandler* handler, const char* accesskey,
 		const char* secretkey, const char* bucketname, int ssl, SNDAECSResult* ret)
@@ -145,6 +108,27 @@ SNDAECSErrorCode snda_ecs_get_bucket_location(SNDAECSHandler* handler, const cha
 			ret);
 }
 
+SNDAECSBucketLocation* snda_ecs_get_bucket_location_info(const char* accesskey,
+		const char* secretkey, const char* bucketname, int ssl){
+        SNDAECSHandler* handler;
+        SNDAECSResult* ret;
+        SNDAECSErrorCode retcode ;
+        SNDAECSBucketLocation* location = 0;
+        handler = snda_ecs_init_handler();
+        ret = snda_ecs_init_result();
+        retcode = snda_ecs_get_bucket_location(handler, accesskey,
+                        secretkey, bucketname, ssl, ret);
+        if (retcode != SNDA_ECS_SUCCESS) {
+                printf("ClientErrorMessage:%s", ret->error->handlererrmsg);
+
+        } if (ret->serverresponse->httpcode == 200) {
+             location = snda_ecs_to_bucket_location(ret);
+        } 
+
+        snda_ecs_release_handler(handler);
+        snda_ecs_release_result(ret);
+        return location;
+}
 SNDAECSBucketLocation* snda_ecs_to_bucket_location(SNDAECSResult* ret)
 {
     const char* snda_ecs_region_default = "huabei-1";
@@ -188,6 +172,55 @@ SNDAECSBucketLocation* snda_ecs_to_bucket_location(SNDAECSResult* ret)
 
 	return bucketlocation;
 }
+
+
+SNDAECSErrorCode snda_ecs_put_bucket_policy(SNDAECSHandler* handler, const char* accesskey,
+		const char* secretkey, const char* bucketname, const char* policy,
+		int ssl, SNDAECSResult* ret)
+{
+	const char* subresource = "?policy";
+	char* region = 0;
+	SNDAECSBucketLocation *location;
+    SNDAECSErrorCode retcode = SNDA_ECS_ERROR;
+    SNDAECSReadBuff buff;
+	buff.consumed = 0;
+
+	location = snda_ecs_get_bucket_location_info(accesskey,secretkey,bucketname,ssl);
+	if(location) {
+		region = location->location;
+	}
+
+	buff.databuff = calloc(strlen(policy) + 1, sizeof(char));
+	memcpy(buff.databuff, policy, strlen(policy));
+	buff.datasize = strlen(buff.databuff);
+
+	retcode = snda_ecs_bucket_opt(handler, accesskey, secretkey,
+			bucketname, region, subresource, subresource, ssl, &buff,
+			SNDA_ECS_PUT, SNDA_ECS_FOLLOW_LOCATION, 1,
+			ret);
+
+	free(buff.databuff);
+     
+	if(location) {
+	  snda_ecs_release_bucket_location(location);
+	}
+	return retcode;
+}
+
+
+
+SNDAECSErrorCode snda_ecs_get_bucket_policy(SNDAECSHandler* handler, const char* accesskey,
+		const char* secretkey, const char* bucketname, int ssl, SNDAECSResult* ret)
+{
+	const char* subresource = "?policy";
+	const char* region = 0;
+    
+	return snda_ecs_bucket_opt(handler, accesskey, secretkey,
+			bucketname, region, subresource, subresource, ssl, 0,
+			SNDA_ECS_GET, SNDA_ECS_FOLLOW_LOCATION, 1,
+			ret);
+}
+
 
 SNDAECSErrorCode snda_ecs_delete_bucket(SNDAECSHandler* handler, const char* accesskey,
 		const char* secretkey, const char* bucketname, const char* region, int ssl,

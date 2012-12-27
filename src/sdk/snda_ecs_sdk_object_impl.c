@@ -155,13 +155,15 @@ SNDAECSErrorCode snda_ecs_delete_object(SNDAECSHandler* handler, const char* acc
 		SNDAECSFollowLocation followlocation, long maxredirects,
 		SNDAECSResult* ret)
 {
+	SNDAECSErrorCode retcode = SNDA_ECS_ERROR;
+	char* subresource = 0;
 	if (!objectname || !strlen(objectname)) {
 		snda_ecs_set_handler_error(ret, "object name must be set in DeleteObject.");
 		return SNDA_ECS_BAD_ARGUMENTS;
 	}
 
-    SNDAECSErrorCode retcode = SNDA_ECS_ERROR;
-	char* subresource= (char*)malloc(strlen("/") + strlen(objectname) + 1);
+    
+	 subresource= (char*)malloc(strlen("/") + strlen(objectname) + 1);
 	sprintf(subresource, "/%s", objectname);
 
     retcode = snda_ecs_common_opt(handler, accesskey, secretkey,
@@ -208,13 +210,15 @@ SNDAECSErrorCode snda_ecs_get_object(SNDAECSHandler* handler, const char* access
 		SNDAECSFollowLocation followlocation, long maxredirects,
 		SNDAECSResult* ret)
 {
+	SNDAECSErrorCode retcode = SNDA_ECS_ERROR;
+	char* subresource = 0;
 	if (!objectname || !strlen(objectname)) {
 		snda_ecs_set_handler_error(ret, "object name must be set in GetObject.");
 		return SNDA_ECS_BAD_ARGUMENTS;
 	}
 
-    SNDAECSErrorCode retcode = SNDA_ECS_ERROR;
-	char* subresource = (char*)malloc(strlen("/") + strlen(objectname) + 1);
+     
+	subresource = (char*)malloc(strlen("/") + strlen(objectname) + 1);
 
 	sprintf(subresource, "/%s", objectname);
 
@@ -259,13 +263,15 @@ SNDAECSErrorCode snda_ecs_head_object(SNDAECSHandler* handler, const char* acces
 		const char* region, int ssl, SNDAECSFollowLocation followlocation, long maxredirects,
 		SNDAECSResult* ret)
 {
+	SNDAECSErrorCode retcode = SNDA_ECS_ERROR;
+    char* subresource = 0;
 	if (!objectname || !strlen(objectname)) {
 		snda_ecs_set_handler_error(ret, "object name must be set in HeadObject.");
 		return SNDA_ECS_BAD_ARGUMENTS;
 	}
 
-    SNDAECSErrorCode retcode = SNDA_ECS_ERROR;
-    char* subresource = (char*)malloc(strlen("/") + strlen(objectname) + 1);
+    
+    subresource = (char*)malloc(strlen("/") + strlen(objectname) + 1);
 	sprintf(subresource, "/%s", objectname);
 
 	retcode = snda_ecs_common_opt(handler, accesskey, secretkey,
