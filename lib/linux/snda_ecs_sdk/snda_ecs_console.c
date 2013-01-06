@@ -4,10 +4,10 @@
 
 #include <string.h>
 
-#include "../snda_ecs_sdk/snda_ecs_sdk.h"
-#include "../snda_ecs_sdk/snda_ecs_http_util.h"
-#include "../snda_ecs_sdk/snda_ecs_constants.h"
-#include "../snda_ecs_sdk/snda_ecs_common_util.h"
+#include "snda_ecs_sdk/snda_ecs_sdk.h"
+#include "snda_ecs_sdk/snda_ecs_http_util.h"
+#include "snda_ecs_sdk/snda_ecs_constants.h"
+#include "snda_ecs_sdk/snda_ecs_common_util.h"
 
 static void snda_ecs_oneline(const char* msg) {
 	printf("%s \n", msg);

@@ -76,6 +76,7 @@ static inline void snda_ecs_set_handler_error(SNDAECSResult* ret, const char* ms
 }
 
 char* snda_ecs_get_content_type(const char* filename, char* contenttype);
+char* snda_ecs_get_region_host(const char * region,char* region_host);
 
 #ifdef __cplusplus
 }

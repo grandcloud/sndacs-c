@@ -575,7 +575,7 @@ static inline void snda_ecs_free_char_ptr(char* pointer) {
 static inline void snda_ecs_copy_string(char** str1, const void* str2) {
 	if (str2) {
 		snda_ecs_free_char_ptr(*str1);
-		*str1 = calloc(strlen((char*)str2) + 2, sizeof(char));
+		*str1 = (char * )calloc(strlen((char*)str2) + 2, sizeof(char));
 		memcpy(*str1, str2, strlen((char*)str2)+1);
 		//str1[strlen((char*)str2)] = '\0';
 	}
